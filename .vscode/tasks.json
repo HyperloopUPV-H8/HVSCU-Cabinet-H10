@@ -1,0 +1,12 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Start Debug Server for Simulator on emulated arch",
+        "type": "shell",
+        "command": "ROSETTA_DEBUGSERVER_PORT=1234 ./out/build/latest.elf",
+        "problemMatcher": [],
+        "isBackground": true
+      }
+    ]
+  }

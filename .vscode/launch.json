@@ -1,0 +1,66 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "cortex-debug",
+      "request": "launch",
+      "name": "Build and Debug Project",
+      "servertype": "stlink",
+      "cwd": "${workspaceRoot}",
+      "runToEntryPoint": "main",
+      "showDevDebugOutput": "raw",
+      "executable": "out/build/latest.elf",
+      "device": "STM32H723ZG",
+      "configFiles": [".vscode/stlink.cfg", ".vscode/stm32h7x.cfg"],
+      "svdFile": ".vscode/STM32H723.svd",
+      "swoConfig": {
+        "enabled": true,
+        "cpuFrequency": 8000000,
+        "swoFrequency": 2000000,
+        "source": "probe",
+        "decoders": [{ "type": "console", "label": "ITM", "port": 0 }]
+      },
+      "preLaunchTask": "CMake: build"
+    },
+    {
+      "type": "cortex-debug",
+      "request": "launch",
+      "name": "Debug Project",
+      "servertype": "stlink",
+      "cwd": "${workspaceRoot}",
+      "runToEntryPoint": "main",
+      "showDevDebugOutput": "raw",
+      "executable": "out/build/latest.elf",
+      "device": "STM32H723ZG",
+      "configFiles": [".vscode/stlink.cfg", ".vscode/stm32h7x.cfg"],
+      "svdFile": "./STM32H723.svd",
+      "swoConfig": {
+        "enabled": true,
+        "cpuFrequency": 8000000,
+        "swoFrequency": 2000000,
+        "source": "probe",
+        "decoders": [{ "type": "console", "label": "ITM", "port": 0 }]
+      },
+      "stm32cubeprogrammer": "/opt/st/stm32cubeclt_1.16.0/STM32CubeProgrammer/bin"
+    },
+    {
+      "name": "Debug simulator on Rosetta",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "out/build/latest.elf",
+      "miDebuggerServerAddress": "localhost:1234",
+      "miDebuggerPath": "/usr/bin/gdb",
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Set architecture to x86-64",
+          "text": "set architecture i386:x86-64",
+          "ignoreFailures": false
+        }
+      ],
+      "preLaunchTask": "Start Debug Server for Simulator on emulated arch",
+      "cwd": "${workspaceFolder}",
+      "externalConsole": false
+    }
+  ]
+}
