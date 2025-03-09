@@ -3,6 +3,7 @@ cmake_minimum_required (VERSION 3.14)
 project (template-project ASM C CXX)
 set(EXECUTABLE ${PROJECT_NAME}.elf)
 set(STLIB_DIR ${CMAKE_CURRENT_LIST_DIR}/deps/ST-LIB)
+set(CMSLIB_DIR ${CMAKE_CURRENT_LIST_DIR}/deps/CMS-LIB)
 
 option(USE_ETHERNET "Enable ethernet peripheral" OFF)
 option(TARGET_NUCLEO "Targets the STM32H723 Nucleo development board" OFF)
@@ -22,6 +23,7 @@ if (PROJECT_IS_TOP_LEVEL AND (NOT CMAKE_CROSSCOMPILING))
 endif()
 
 add_subdirectory(${STLIB_DIR})
+add_subdirectory(${CMSLIB_DIR})
 
 set(HAL_HEADER 
   ${CMAKE_SOURCE_DIR}/Core/Inc/main.h
@@ -66,6 +68,7 @@ ${SOURCE_CPP}
 
 target_link_libraries(${EXECUTABLE} PRIVATE 
   st-lib
+  cms-lib
   $<$<NOT:$<BOOL:${CMAKE_CROSSCOMPILING}>>:GTest::gtest_main>
 )
 
@@ -133,6 +136,7 @@ target_include_directories(${EXECUTABLE} PRIVATE
   ${STLIB_DIR}/Inc
   ${STLIB_DIR}/Inc/ST-LIB_LOW
   ${STLIB_DIR}/Inc/ST-LIB_HIGH
+  ${CMSLIB_DIR}/Inc
 )
 
 target_link_options(${EXECUTABLE} PRIVATE 
@@ -158,8 +162,8 @@ if (PROJECT_IS_TOP_LEVEL)
     )
     # Create symlink to executable for IDE to pick it up
     add_custom_command(
-        TARGET ${EXECUTABLE}
-        POST_BUILD
+      TARGET ${EXECUTABLE}
+      POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E create_symlink
         ${CMAKE_BINARY_DIR}/${EXECUTABLE}
         ${CMAKE_CURRENT_SOURCE_DIR}/out/build/latest.elf
