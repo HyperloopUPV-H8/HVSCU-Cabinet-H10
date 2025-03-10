@@ -4,6 +4,7 @@
 #include "HVSCU/Actuators/Contactors.hpp"
 #include "HVSCU/Actuators/LEDs.hpp"
 #include "HVSCU/Communication/CAN.hpp"
+#include "HVSCU/Communication/Ethernet.hpp"
 #include "HVSCU/Pinout.hpp"
 #include "HVSCU/Sensors/IMD.hpp"
 #include "ST-LIB.hpp"
@@ -21,9 +22,18 @@ class Board {
     Sensors::IMD imd;
 
     Actuators::Contactors contactors;
+
+    // This is here to avoid initialization reorder warning and still be able to
+    // give it the sensor data for udp in the initialization list
+    Communication::Ethernet ethernet;
+
     Actuators::LEDs leds;
 
     void initialize_state_machine();
+
+    void update_connecting();
+    void update_operational();
+    void update_fault();
 
    public:
     Board();
