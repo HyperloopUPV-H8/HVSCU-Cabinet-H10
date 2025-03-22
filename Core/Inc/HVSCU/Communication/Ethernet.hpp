@@ -16,14 +16,14 @@ class Ethernet {
     static void on_open_contactors() { has_received_open_contactors = true; }
     static void on_charge_supercaps() { has_received_charge_supercaps = true; }
 
-    const float *total_supercaps_voltage;
-    std::array<std::array<const float *, 48>, 3> cells_voltage;
-    std::array<const float *, 3> module_voltage;
-    std::array<const float *, 3> max_cell_voltage;
-    std::array<const float *, 3> min_cell_voltage;
-    std::array<const float *, 3> avg_cell_voltage;
-    std::array<const float *, 3> max_temp;
-    std::array<const float *, 3> min_temp;
+    float *total_supercaps_voltage;
+    std::array<std::array<float *, 48>, 3> cells_voltage;
+    std::array<float *, 3> module_voltage;
+    std::array<float *, 3> max_cell_voltage;
+    std::array<float *, 3> min_cell_voltage;
+    std::array<float *, 3> avg_cell_voltage;
+    std::array<float *, 3> max_temp;
+    std::array<float *, 3> min_temp;
 
     HeapPacket total_voltage{1600, total_supercaps_voltage};
 
@@ -215,14 +215,13 @@ class Ethernet {
 
     float charge_voltage{0.0f};
 
-    Ethernet(const float *total_supercaps_voltage,
-             std::array<std::array<const float *, 48>, 3> cells_voltage,
-             std::array<const float *, 3> module_voltage,
-             std::array<const float *, 3> max_cell_voltage,
-             std::array<const float *, 3> min_cell_voltage,
-             std::array<const float *, 3> avg_cell_voltage,
-             std::array<const float *, 3> max_temp,
-             std::array<const float *, 3> min_temp);
+    Ethernet(float *total_supercaps_voltage,
+             std::array<std::array<float *, 48>, 3> cells_voltage,
+             std::array<float *, 3> module_voltage,
+             std::array<float *, 3> max_cell_voltage,
+             std::array<float *, 3> min_cell_voltage,
+             std::array<float *, 3> avg_cell_voltage,
+             std::array<float *, 3> max_temp, std::array<float *, 3> min_temp);
 };
 
 };  // namespace HVSCU::Communication
