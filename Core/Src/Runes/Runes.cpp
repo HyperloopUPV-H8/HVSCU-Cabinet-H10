@@ -1,4 +1,9 @@
 #include "HALAL/HALAL.hpp"
+#include "CMS-LIB.hpp"
+
+CMS::Data::System<NUMBER_OF_STRINGS + 1, NUMBER_OF_MODULES + 1>
+    CMS::Communications::ModuleCAN::system{};
+
 
 DMA_HandleTypeDef hdma_adc1;
 DMA_HandleTypeDef hdma_adc2;

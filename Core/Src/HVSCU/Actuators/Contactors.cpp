@@ -201,4 +201,8 @@ const StateMachine::state_id &Contactors::get_state() const {
     return contactors_state.current_state;
 }
 
+Contactors::State *Contactors::get_state_pointer() {
+    return (State *)&contactors_state.current_state;
+}
+
 };  // namespace HVSCU::Actuators

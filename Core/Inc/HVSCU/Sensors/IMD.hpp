@@ -21,7 +21,6 @@ class IMD {
 
    private:
     DigitalOutput power;
-    DigitalOutput bypass;
 
     PWMSensor<float> output;
 
@@ -32,13 +31,10 @@ class IMD {
     float isolation_resistance{0.0};
 
    public:
-    IMD(Pin &power_pin, Pin &bypass_pin, Pin &output_pin);
+    IMD(Pin &power_pin, Pin &output_pin);
 
     void turn_on();
     void turn_off();
-
-    void enable_hardware_protections();
-    void disable_hardware_protections();
 
     const State &get_state() const;
     const float &get_isolation_resistance() const;

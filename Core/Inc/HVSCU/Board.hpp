@@ -3,31 +3,44 @@
 #include "CMS-LIB.hpp"
 #include "HVSCU/Actuators/Contactors.hpp"
 #include "HVSCU/Actuators/LEDs.hpp"
+#include "HVSCU/Actuators/SDC.hpp"
 #include "HVSCU/Communication/CAN.hpp"
 #include "HVSCU/Communication/Ethernet.hpp"
 #include "HVSCU/Pinout.hpp"
+#include "HVSCU/Sensors/BusVoltage.hpp"
 #include "HVSCU/Sensors/IMD.hpp"
 #include "ST-LIB.hpp"
 
 namespace HVSCU {
 
-class Board {
-    float bus_voltage{0.0};
+// Turn the STLIB into a class
+struct STLIBHandle {
+    STLIBHandle(string ip = "192.168.1.4", string subnet_mask = "255.255.0.0",
+                string gateway = "192.168.1.1",
+                UART::Peripheral& printf_peripheral = UART::uart2) {
+        STLIB::start(ip, subnet_mask, gateway, printf_peripheral);
+    }
 
+    void update() { STLIB::update(); }
+};
+
+class Board {
     enum States : uint8_t { Connecting = 0, Operational = 1, Fault = 2 };
     StateMachine general_state_machine;
 
-    Communication::CAN can;
-
     Sensors::IMD imd;
+    Sensors::BusVoltage bus_voltage;
 
     Actuators::Contactors contactors;
+    Actuators::LEDs leds;
+    Actuators::SDC sdc;
+
+    STLIBHandle stlib;
 
     // This is here to avoid initialization reorder warning and still be able to
     // give it the sensor data for udp in the initialization list
+    Communication::CAN can;
     Communication::Ethernet ethernet;
-
-    Actuators::LEDs leds;
 
     void initialize_state_machine();
 

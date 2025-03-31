@@ -10,9 +10,8 @@
 
 namespace HVSCU::Sensors {
 
-IMD::IMD(Pin &power_pin, Pin &bypass_pin, Pin &output_pin)
+IMD::IMD(Pin &power_pin, Pin &output_pin)
     : power(power_pin),
-      bypass(bypass_pin),
       output(output_pin, output_frequency, output_duty_cycle) {
     turn_off();
 }
@@ -24,9 +23,6 @@ void IMD::turn_off() {
     state = IMD::State::Unknown;
     isolation_resistance = infinite_resistance;
 }
-
-void IMD::enable_hardware_protections() { bypass.turn_off(); }
-void IMD::disable_hardware_protections() { bypass.turn_on(); }
 
 const IMD::State &IMD::get_state() const { return state; }
 const float &IMD::get_isolation_resistance() const {

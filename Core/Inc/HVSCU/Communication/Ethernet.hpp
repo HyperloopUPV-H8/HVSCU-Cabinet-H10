@@ -1,5 +1,6 @@
 #pragma once
 
+#include "HVSCU/Actuators/Contactors.hpp"
 #include "ST-LIB.hpp"
 
 namespace HVSCU::Communication {
@@ -8,14 +9,23 @@ class Ethernet {
     ServerSocket control_station_tcp;
     DatagramSocket control_station_udp;
 
-    HeapOrder close_contactors{999, on_close_contactors};
-    HeapOrder open_contactors{998, on_open_contactors};
-    HeapOrder charge_supercaps{997, on_charge_supercaps, &charge_voltage};
+    HeapOrder close_contactors{1699, on_close_contactors};
+    HeapOrder open_contactors{1698, on_open_contactors};
+    HeapOrder charge_supercaps{1697, on_charge_supercaps, &charge_voltage};
+    HeapOrder reset_supercaps{1696, on_reset_supercaps};
+    HeapOrder imd_bypass{1695, on_imd_bypass, &imd_bypass_state};
+    HeapOrder sdc_enalbe{1694, on_sdc_enable, &sdc_enable_state};
 
     static void on_close_contactors() { has_received_close_contactors = true; }
     static void on_open_contactors() { has_received_open_contactors = true; }
     static void on_charge_supercaps() { has_received_charge_supercaps = true; }
+    static void on_reset_supercaps() { has_received_reset_supercaps = true; }
+    static void on_imd_bypass() { has_received_imd_bypass = true; }
+    static void on_sdc_enable() { has_received_sdc_enable = true; }
 
+    PinState *sdc_good;
+    float *bus_voltage;
+    Actuators::Contactors::State *contactors_internal_state;
     float *total_supercaps_voltage;
     std::array<std::array<float *, 48>, 3> cells_voltage;
     std::array<float *, 3> module_voltage;
@@ -201,8 +211,12 @@ class Ethernet {
                               cells_voltage[2][46],
                               cells_voltage[2][47]};
 
+    HeapPacket sdc_state{1607, sdc_good};
+
+    HeapPacket contactors_state{1608, bus_voltage, contactors_internal_state};
+
    public:
-    inline static const IPV4 local_ip{"192.168.2.10"};
+    inline static const IPV4 local_ip{"192.168.2.16"};
     inline static const IPV4 control_station_ip{"192.168.0.9"};
 
     inline static const uint16_t tcp_server_port{50500};
@@ -212,8 +226,23 @@ class Ethernet {
     inline static bool has_received_close_contactors{false};
     inline static bool has_received_open_contactors{false};
     inline static bool has_received_charge_supercaps{false};
+    inline static bool has_received_reset_supercaps{false};
+    inline static bool has_received_imd_bypass{false};
+    inline static bool has_received_sdc_enable{false};
+
+    enum ImdBypassState : uint8_t {
+        EnableIMD = 0,
+        DisableIMD = 1,
+    };
+
+    enum SdcEnableState : uint8_t {
+        EnableSDC = 0,
+        DisableSDC = 1,
+    };
 
     float charge_voltage{0.0f};
+    ImdBypassState imd_bypass_state{ImdBypassState::DisableIMD};
+    SdcEnableState sdc_enable_state{SdcEnableState::DisableSDC};
 
     Ethernet(float *total_supercaps_voltage,
              std::array<std::array<float *, 48>, 3> cells_voltage,
@@ -221,7 +250,15 @@ class Ethernet {
              std::array<float *, 3> max_cell_voltage,
              std::array<float *, 3> min_cell_voltage,
              std::array<float *, 3> avg_cell_voltage,
-             std::array<float *, 3> max_temp, std::array<float *, 3> min_temp);
+             std::array<float *, 3> max_temp, std::array<float *, 3> min_temp,
+             PinState *sdc_good, float *bus_voltage,
+             Actuators::Contactors::State *contactors_internal_state);
+
+    void send_supercaps_data();
+    void send_sdc_data();
+    void send_contactors_data();
+
+    bool is_connected();
 };
 
 };  // namespace HVSCU::Communication

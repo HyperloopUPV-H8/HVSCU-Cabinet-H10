@@ -3,7 +3,8 @@
 namespace HVSCU::Communication {
 
 CAN::CAN()
-    : module_can(
+    : can_id(FDCAN::inscribe(FDCAN::fdcan1)),
+      module_can(
           [&](CMS::Messages::CanPacket& packet) {
               static FDCAN::Packet last_packet{};
 
@@ -23,11 +24,10 @@ CAN::CAN()
                   reinterpret_cast<const char*>(packet.payload.data()),
                   length_to_DLC(packet.length));
               return sent;
-          }) {
-    can_id = FDCAN::inscribe(FDCAN::fdcan1);
-}
+          }) {}
 
 void CAN::start() {
+    FDCAN::start();
     module_can.start_module(1, 1);
     module_can.start_module(1, 2);
     module_can.start_module(1, 3);

@@ -77,6 +77,7 @@ class Contactors {
     void hold_charge();
 
     const StateMachine::state_id &get_state() const;
+    State *get_state_pointer();
 
     ~Contactors();
 };

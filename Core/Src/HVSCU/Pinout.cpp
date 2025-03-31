@@ -47,7 +47,7 @@ Pin& contactor_low_pin{FW_CONTACTOR_LOW};
 Pin& contactor_precharge_pin{FW_PRECHARGE};
 Pin& contactor_ess_discharge_pin{DISCHARGE_SC};
 Pin& contactor_ess_charge_pin{HV_CHARGER};
-Pin& contactor_inverter_discharge_pin{DISCHARGE_SC};
+Pin& contactor_inverter_discharge_pin{FW_DISCHARGE};
 
 Pin& can_tx_pin{TXD};
 Pin& can_rx_pin{RXD};
