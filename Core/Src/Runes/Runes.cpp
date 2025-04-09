@@ -1,4 +1,9 @@
 #include "HALAL/HALAL.hpp"
+#include "CMS-LIB.hpp"
+
+CMS::Data::System<NUMBER_OF_STRINGS + 1, NUMBER_OF_MODULES + 1>
+    CMS::Communications::ModuleCAN::system{};
+
 
 DMA_HandleTypeDef hdma_adc1;
 DMA_HandleTypeDef hdma_adc2;
@@ -55,7 +60,7 @@ FDCAN::Instance FDCAN::instance1 = {.TX = PD1,
                                     .RX = PD0,
                                     .hfdcan = &hfdcan1,
                                     .instance = FDCAN1,
-                                    .dlc = DLC::BYTES_64,
+                                    .dlc = DLC::BYTES_8,
                                     .rx_location = FDCAN_RX_FIFO0,
                                     .fdcan_number = 1};
 

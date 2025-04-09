@@ -4,20 +4,17 @@
 #include "lwip.h"
 #endif
 
-#include "ST-LIB.hpp"
+#include "HVSCU/Board.hpp"
 
 int main(void) {
 #ifdef SIM_ON
     SharedMemory::start();
 #endif
 
-    DigitalOutput led_on(PA1);
-    STLIB::start();
-
-    Time::register_low_precision_alarm(100, [&]() { led_on.toggle(); });
+    HVSCU::Board hvscu;
 
     while (1) {
-        STLIB::update();
+        hvscu.update();
     }
 }
 
