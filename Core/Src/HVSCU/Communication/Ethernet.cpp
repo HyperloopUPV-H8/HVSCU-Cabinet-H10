@@ -39,7 +39,19 @@ Ethernet::Ethernet(float *total_supercaps_voltage,
       ref_speed(ref_speed),
       ref_switch_freq(ref_switch_freq),
       ref_dead_time(ref_dead_time),
-      fixed_dc_link_vtg(fixed_dc_link_vtg) {}
+      fixed_dc_link_vtg(fixed_dc_link_vtg) {
+
+    ///////////BCU orders///////////
+    BCU_test_pwm = new HeapOrder{1700, on_BCU_test_pwm,&duty_u,&duty_v,&duty_w};
+    BCU_emulate_movement = new HeapOrder{1701, on_BCU_emulate_movement, &angular_velocity, &ref_q, &ref_d};
+    BCU_current_control = new HeapOrder{1702, on_BCU_current_control, &ref_q, &ref_d};
+    BCU_velocity_control = new HeapOrder{1703, on_BCU_velocity_control, &ref_speed};
+    BCU_set_pwm_params = new HeapOrder{1704, on_BCU_set_pwm_params, &ref_switch_freq, &ref_dead_time};
+    BCU_stop = new HeapOrder{1705, on_BCU_stop};
+    BCU_set_fixed_dc_link_vtg = new HeapOrder{1706, on_BCU_set_fixed_dc_link_vtg, &fixed_dc_link_vtg};
+    BCU_unset_fixed_dc_link_vtg = new HeapOrder{1707, on_BCU_unset_fixed_dc_link_vtg};
+
+      }
 
 void Ethernet::send_supercaps_data() {
     control_station_udp.send_packet(total_voltage);

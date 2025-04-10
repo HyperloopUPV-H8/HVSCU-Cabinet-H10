@@ -17,14 +17,14 @@ class Ethernet {
     HeapOrder sdc_enalbe{1694, on_sdc_enable, &sdc_enable_state};
 
     ///////////BCU orders///////////
-    HeapOrder BCU_test_pwm{1700, on_BCU_test_pwm,&duty_u,&duty_v,&duty_w};
-    HeapOrder BCU_emulate_movement{1701, on_BCU_emulate_movement,&angular_velocity,&ref_q,&ref_d};
-    HeapOrder BCU_current_control{1702, on_BCU_current_control,&ref_q,&ref_d};
-    HeapOrder BCU_velocity_control{1703, on_BCU_velocity_control,&ref_speed};
-    HeapOrder BCU_set_pwm_params{1704, on_BCU_set_pwm_params,&ref_switch_freq,&ref_dead_time};
-    HeapOrder BCU_stop{1705, on_BCU_stop};
-    HeapOrder BCU_set_fixed_dc_link_vtg{1706, on_BCU_set_fixed_dc_link_vtg,&fixed_dc_link_vtg};
-    HeapOrder BCU_unset_fixed_dc_link_vtg{1707, on_BCU_unset_fixed_dc_link_vtg};
+    HeapOrder* BCU_test_pwm;
+    HeapOrder* BCU_emulate_movement;
+    HeapOrder* BCU_current_control;
+    HeapOrder* BCU_velocity_control;
+    HeapOrder* BCU_set_pwm_params;
+    HeapOrder* BCU_stop;
+    HeapOrder* BCU_set_fixed_dc_link_vtg;
+    HeapOrder* BCU_unset_fixed_dc_link_vtg;
 
     static void on_BCU_test_pwm() { has_received_BCU_test_pwm = true; }
     static void on_BCU_emulate_movement() { has_received_BCU_emulate_movement = true; }

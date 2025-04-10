@@ -3,7 +3,7 @@
 namespace HVSCU::Communication {
 
 CAN::CAN()
-    : can_id(FDCAN::inscribe(FDCAN::fdcan1)),
+    : can_id(FDCAN::inscribe<CANBitRatesSpeed::CAN_500_kbit,CANFormat::CAN_NORMAL_FORMAT,CANIdentifier::CAN_11_BIT_IDENTIFIER,CANMode::>(FDCAN::fdcan1)),
       module_can(
           [&](CMS::Messages::CanPacket& packet) {
               static FDCAN::Packet last_packet{};
@@ -11,9 +11,14 @@ CAN::CAN()
               bool got_something = FDCAN::read(can_id, &last_packet);
 
               if (got_something) {
+                if(last_packet.identifier >= 0x701){
+                    //handle BCU orders here
+                    handle_bcu_data(last_packet);
+                }else{
                   packet.id = last_packet.identifier;
                   packet.length = DLC_to_length(last_packet.data_length);
                   packet.payload = last_packet.rx_data;
+                }
               }
 
               return got_something;
@@ -40,7 +45,34 @@ void CAN::restart() {
 
     Time::set_timeout(1000, [&]() { start(); });
 }
-
+void CAN::handle_bcu_data(FDCAN::Packet& packet){
+    switch(packet.identifier){
+        case 0x709:
+            memcpy(&BCU_data::master_general_state, &packet.rx_data[0], sizeof(uint8_t));
+            memcpy(&BCU_data::master_nested_state, &packet.rx_data[1], sizeof(uint8_t));
+            memcpy(&BCU_data::slave_general_state, &packet.rx_data[2], sizeof(uint8_t));
+            memcpy(&BCU_data::slave_nested_state, &packet.rx_data[3], sizeof(uint8_t));
+            break;
+        case 0x710:
+            memcpy(BCU_data::control_params.data() + packet.rx_data[0], &packet.rx_data[1], sizeof(float));
+            break;
+        case 0x711:
+            memcpy(BCU_data::encoders_data.data() + packet.rx_data[0], &packet.rx_data[1], sizeof(float));
+            break;
+        case 0x712:
+            memcpy(&BCU_data::direction_speetec_1, &packet.rx_data[0], sizeof(uint8_t));
+            memcpy(&BCU_data::direction_speetec_2, &packet.rx_data[1], sizeof(uint8_t));
+            memcpy(&BCU_data::direction_speetec_3, &packet.rx_data[2], sizeof(uint8_t));
+            memcpy(&BCU_data::pod_in_booster_section, &packet.rx_data[3], sizeof(bool));
+            break;
+        case 0X713:
+            memcpy(BCU_data::inverters_data.data() + packet.rx_data[0], &packet.rx_data[1], sizeof(float));
+            break;
+        case 0x714:
+            memcpy(BCU_data::encoders_control.data() + packet.rx_data[0], &packet.rx_data[1], 8);
+        break;
+    }
+}
 void CAN::set_data_rate(CMS::Types::TxCycle_t tx_cycle) {
     module_can.change_module_tx_cycle(1, 1, tx_cycle);
     module_can.change_module_tx_cycle(1, 2, tx_cycle);
