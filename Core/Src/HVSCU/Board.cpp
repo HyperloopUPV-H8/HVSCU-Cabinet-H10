@@ -30,7 +30,12 @@ Board::Board()
                can.module_can.system.all_max_temperature[0],
                can.module_can.system.all_min_temperature[0],
                sdc.get_sdc_state(), bus_voltage.get_voltage_pointer(),
-               contactors.get_state_pointer()) {
+               contactors.get_state_pointer(),
+                BCU_data::charge_voltage,
+               BCU_data::duty_u, BCU_data::duty_v, BCU_data::duty_w,
+               BCU_data::angular_velocity, BCU_data::ref_q, BCU_data::ref_d,
+               BCU_data::ref_speed, BCU_data::ref_switch_freq,
+               BCU_data::ref_dead_time, BCU_data::fixed_dc_link_vtg) {
     initialize_state_machine();
 
     can.start();
@@ -142,6 +147,46 @@ void Board::update_operational() {
         }
 
         ethernet.has_received_sdc_enable = false;
+    }
+    if (ethernet.has_received_BCU_test_pwm) {
+        // Handle BCU test PWM logic here
+        can
+        ethernet.has_received_BCU_test_pwm = false;
+    }
+
+    if (ethernet.has_received_BCU_emulate_movement) {
+        // Handle BCU emulate movement logic here
+        ethernet.has_received_BCU_emulate_movement = false;
+    }
+
+    if (ethernet.has_received_BCU_current_control) {
+        // Handle BCU current control logic here
+        ethernet.has_received_BCU_current_control = false;
+    }
+
+    if (ethernet.has_received_BCU_velocity_control) {
+        // Handle BCU velocity control logic here
+        ethernet.has_received_BCU_velocity_control = false;
+    }
+
+    if (ethernet.has_received_BCU_set_pwm_params) {
+        // Handle BCU set PWM parameters logic here
+        ethernet.has_received_BCU_set_pwm_params = false;
+    }
+
+    if (ethernet.has_received_BCU_stop) {
+        // Handle BCU stop logic here
+        ethernet.has_received_BCU_stop = false;
+    }
+
+    if (ethernet.has_received_BCU_set_fixed_dc_link_vtg) {
+        // Handle BCU set fixed DC link voltage logic here
+        ethernet.has_received_BCU_set_fixed_dc_link_vtg = false;
+    }
+
+    if (ethernet.has_received_BCU_unset_fixed_dc_link_vtg) {
+        // Handle BCU unset fixed DC link voltage logic here
+        ethernet.has_received_BCU_unset_fixed_dc_link_vtg = false;
     }
 }
 

@@ -6,7 +6,6 @@
 namespace HVSCU::Communication {
 
 class CAN {
-    uint8_t can_id;
 
     inline constexpr static uint8_t DLC_to_length(
         const ::FDCAN::DLC dlc) noexcept;
@@ -15,6 +14,8 @@ class CAN {
         const uint8_t length) noexcept;
 
    public:
+   uint8_t can_id;
+
     CMS::Communications::ModuleCAN module_can;
 
     CAN();

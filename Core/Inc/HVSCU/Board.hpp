@@ -9,6 +9,7 @@
 #include "HVSCU/Pinout.hpp"
 #include "HVSCU/Sensors/BusVoltage.hpp"
 #include "HVSCU/Sensors/IMD.hpp"
+#include "BCU_data/BCU_data.hpp"
 #include "ST-LIB.hpp"
 
 namespace HVSCU {

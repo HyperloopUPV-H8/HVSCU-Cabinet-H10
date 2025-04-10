@@ -16,6 +16,24 @@ class Ethernet {
     HeapOrder imd_bypass{1695, on_imd_bypass, &imd_bypass_state};
     HeapOrder sdc_enalbe{1694, on_sdc_enable, &sdc_enable_state};
 
+    ///////////BCU orders///////////
+    HeapOrder BCU_test_pwm{1700, on_BCU_test_pwm,&duty_u,&duty_v,&duty_w};
+    HeapOrder BCU_emulate_movement{1701, on_BCU_emulate_movement,&angular_velocity,&ref_q,&ref_d};
+    HeapOrder BCU_current_control{1702, on_BCU_current_control,&ref_q,&ref_d};
+    HeapOrder BCU_velocity_control{1703, on_BCU_velocity_control,&ref_speed};
+    HeapOrder BCU_set_pwm_params{1704, on_BCU_set_pwm_params,&ref_switch_freq,&ref_dead_time};
+    HeapOrder BCU_stop{1705, on_BCU_stop};
+    HeapOrder BCU_set_fixed_dc_link_vtg{1706, on_BCU_set_fixed_dc_link_vtg,&fixed_dc_link_vtg};
+    HeapOrder BCU_unset_fixed_dc_link_vtg{1707, on_BCU_unset_fixed_dc_link_vtg};
+
+    static void on_BCU_test_pwm() { has_received_BCU_test_pwm = true; }
+    static void on_BCU_emulate_movement() { has_received_BCU_emulate_movement = true; }
+    static void on_BCU_current_control() { has_received_BCU_current_control = true; }
+    static void on_BCU_velocity_control() { has_received_BCU_velocity_control = true; }
+    static void on_BCU_set_pwm_params() { has_received_BCU_set_pwm_params = true; }
+    static void on_BCU_stop() { has_received_BCU_stop = true; }
+    static void on_BCU_set_fixed_dc_link_vtg() { has_received_BCU_set_fixed_dc_link_vtg = true; }
+    static void on_BCU_unset_fixed_dc_link_vtg() { has_received_BCU_unset_fixed_dc_link_vtg = true; }
     static void on_close_contactors() { has_received_close_contactors = true; }
     static void on_open_contactors() { has_received_open_contactors = true; }
     static void on_charge_supercaps() { has_received_charge_supercaps = true; }
@@ -229,6 +247,14 @@ class Ethernet {
     inline static bool has_received_reset_supercaps{false};
     inline static bool has_received_imd_bypass{false};
     inline static bool has_received_sdc_enable{false};
+    inline static bool has_received_BCU_test_pwm{false};
+    inline static bool has_received_BCU_emulate_movement{false};
+    inline static bool has_received_BCU_current_control{false};
+    inline static bool has_received_BCU_velocity_control{false};
+    inline static bool has_received_BCU_set_pwm_params{false};
+    inline static bool has_received_BCU_stop{false};
+    inline static bool has_received_BCU_set_fixed_dc_link_vtg{false};
+    inline static bool has_received_BCU_unset_fixed_dc_link_vtg{false};
 
     enum ImdBypassState : uint8_t {
         EnableIMD = 0,
@@ -240,7 +266,17 @@ class Ethernet {
         DisableSDC = 1,
     };
 
-    float charge_voltage{0.0f};
+    float &charge_voltage;
+    uint8_t &duty_u;
+    uint8_t &duty_v;
+    uint8_t &duty_w;
+    float &angular_velocity;
+    uint16_t &ref_q;
+    uint16_t &ref_d;
+    float &ref_speed;
+    float &ref_switch_freq;
+    float &ref_dead_time;
+    float &fixed_dc_link_vtg;
     ImdBypassState imd_bypass_state{ImdBypassState::DisableIMD};
     SdcEnableState sdc_enable_state{SdcEnableState::DisableSDC};
 
@@ -252,7 +288,10 @@ class Ethernet {
              std::array<float *, 3> avg_cell_voltage,
              std::array<float *, 3> max_temp, std::array<float *, 3> min_temp,
              PinState *sdc_good, float *bus_voltage,
-             Actuators::Contactors::State *contactors_internal_state);
+             Actuators::Contactors::State *contactors_internal_state,
+             float &charge_voltage, uint8_t &duty_u, uint8_t &duty_v,
+             uint8_t &duty_w, float &angular_velocity, uint16_t &ref_q,uint16_t &ref_d,
+             float &ref_speed, float &ref_switch_freq, float &ref_dead_time,float &fixed_dc_link_vtg);
 
     void send_supercaps_data();
     void send_sdc_data();
