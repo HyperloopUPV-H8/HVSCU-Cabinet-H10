@@ -45,6 +45,9 @@ class CAN {
     FDCAN::Packet unset_fixed_dc_link_vtg{
         .identifier = 0x807,
         .data_length = FDCAN::DLC::BYTES_0};
+    FDCAN::Packet stop{
+        .identifier = 0x808,
+        .data_length = FDCAN::DLC::BYTES_0};
 };
 
 };  // namespace HVSCU::Communication
