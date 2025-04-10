@@ -51,6 +51,15 @@ Ethernet::Ethernet(float *total_supercaps_voltage,
     BCU_set_fixed_dc_link_vtg = new HeapOrder{1706, on_BCU_set_fixed_dc_link_vtg, &fixed_dc_link_vtg};
     BCU_unset_fixed_dc_link_vtg = new HeapOrder{1707, on_BCU_unset_fixed_dc_link_vtg};
 
+
+    ///////////BCU data///////////
+    state_machine_data = new HeapPacket{1708, &BCU_data::master_general_state, &BCU_data::master_nested_state, &BCU_data::slave_general_state, &BCU_data::slave_nested_state};
+    encoders_data = new HeapPacket{1709, BCU_data::encoders_data.data()};
+    encoders_control = new HeapPacket{1710, BCU_data::encoders_control.data()};
+    inverters_data = new HeapPacket{1711, BCU_data::inverters_data.data()};
+    inverters_control = new HeapPacket{1712, &BCU_data::direction_speetec_1, &BCU_data::direction_speetec_2, &BCU_data::direction_speetec_3,&BCU_data::pod_in_booster_section};
+    control_params = new HeapPacket{1713, BCU_data::control_params.data()};
+
       }
 
 void Ethernet::send_supercaps_data() {
@@ -68,6 +77,13 @@ void Ethernet::send_sdc_data() { control_station_udp.send_packet(sdc_state); }
 void Ethernet::send_contactors_data() {
     control_station_udp.send_packet(contactors_state);
 }
-
+void Ethernet::send_BCU_data() {
+    control_station_udp.send_packet(*state_machine_data);
+    control_station_udp.send_packet(*encoders_data);
+    control_station_udp.send_packet(*encoders_control);
+    control_station_udp.send_packet(*inverters_data);
+    control_station_udp.send_packet(*inverters_control);
+    control_station_udp.send_packet(*control_params);
+}
 bool Ethernet::is_connected() { return control_station_tcp.is_connected(); }
 };  // namespace HVSCU::Communication

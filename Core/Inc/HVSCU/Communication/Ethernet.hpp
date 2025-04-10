@@ -1,6 +1,7 @@
 #pragma once
 
 #include "HVSCU/Actuators/Contactors.hpp"
+#include "BCU_data/BCU_data.hpp"
 #include "ST-LIB.hpp"
 
 namespace HVSCU::Communication {
@@ -25,6 +26,16 @@ class Ethernet {
     HeapOrder* BCU_stop;
     HeapOrder* BCU_set_fixed_dc_link_vtg;
     HeapOrder* BCU_unset_fixed_dc_link_vtg;
+
+    /////BCU data////////////
+
+    HeapPacket* state_machine_data;
+    HeapPacket* encoders_data;
+    HeapPacket* encoders_control;
+    HeapPacket* inverters_data;
+    HeapPacket* inverters_control;
+    HeapPacket* control_params;
+
 
     static void on_BCU_test_pwm() { has_received_BCU_test_pwm = true; }
     static void on_BCU_emulate_movement() { has_received_BCU_emulate_movement = true; }
@@ -296,7 +307,7 @@ class Ethernet {
     void send_supercaps_data();
     void send_sdc_data();
     void send_contactors_data();
-
+    void send_BCU_data();
     bool is_connected();
 };
 

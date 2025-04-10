@@ -3,7 +3,7 @@
 namespace HVSCU::Communication {
 
 CAN::CAN()
-    : can_id(FDCAN::inscribe<CANBitRatesSpeed::CAN_500_kbit,CANFormat::CAN_NORMAL_FORMAT,CANIdentifier::CAN_11_BIT_IDENTIFIER,CANMode::>(FDCAN::fdcan1)),
+    : can_id(FDCAN::inscribe<CANBitRatesSpeed::CAN_500_kbit,CANFormat::CAN_NORMAL_FORMAT,CANIdentifier::CAN_11_BIT_IDENTIFIER,CANMode::CAN_MODE_NORMAL>(FDCAN::fdcan1)),
       module_can(
           [&](CMS::Messages::CanPacket& packet) {
               static FDCAN::Packet last_packet{};
