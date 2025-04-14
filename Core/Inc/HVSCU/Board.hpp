@@ -8,6 +8,7 @@
 #include "HVSCU/Communication/Ethernet.hpp"
 #include "HVSCU/Pinout.hpp"
 #include "HVSCU/Sensors/BusVoltage.hpp"
+#include "HVSCU/Sensors/CurrentSense.hpp"
 #include "HVSCU/Sensors/IMD.hpp"
 #include "ST-LIB.hpp"
 
@@ -30,6 +31,7 @@ class Board {
 
     Sensors::IMD imd;
     Sensors::BusVoltage bus_voltage;
+    Sensors::CurrentSense current_sense;
 
     Actuators::Contactors contactors;
     Actuators::LEDs leds;

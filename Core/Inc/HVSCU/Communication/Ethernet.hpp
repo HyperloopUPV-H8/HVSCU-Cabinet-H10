@@ -65,6 +65,7 @@ class Ethernet {
     std::array<float *, 3> avg_cell_voltage;
     std::array<float *, 3> max_temp;
     std::array<float *, 3> min_temp;
+    float *output_current;
 
     StateMachine::state_id *master_general_state;
     StateMachine::state_id *master_nested_state;
@@ -296,6 +297,8 @@ class Ethernet {
 
     HeapPacket contactors_state{1608, bus_voltage, contactors_internal_state};
 
+    HeapPacket current_sense{1609, output_current};
+
     HeapPacket bcu_state_packet{1701, master_general_state, master_nested_state,
                                 slave_general_state, slave_nested_state};
 
@@ -312,6 +315,7 @@ class Ethernet {
              std::array<float *, 3> max_temp, std::array<float *, 3> min_temp,
              PinState *sdc_good, float *bus_voltage,
              Actuators::Contactors::State *contactors_internal_state,
+             float *output_current,
              StateMachine::state_id *master_general_state,
              StateMachine::state_id *master_nested_state,
              StateMachine::state_id *slave_general_state,
@@ -321,6 +325,7 @@ class Ethernet {
     void send_supercaps_data();
     void send_sdc_data();
     void send_contactors_data();
+    void send_current_sense();
     void send_bcu_data();
     bool is_connected();
 };

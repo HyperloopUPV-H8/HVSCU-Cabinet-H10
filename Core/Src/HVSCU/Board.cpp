@@ -5,6 +5,7 @@ namespace HVSCU {
 Board::Board()
     : imd(Pinout::imd_power_pin, Pinout::imd_measurement_high_side_pin),
       bus_voltage(Pinout::bus_voltage_measurement_pin),
+      current_sense(Pinout::output_current_measurement_pin),
       contactors(Pinout::contactor_ess_discharge_pin,
                  Pinout::contactor_inverter_discharge_pin,
                  Pinout::contactor_ess_charge_pin, Pinout::contactor_low_pin,
@@ -27,7 +28,8 @@ Board::Board()
                can.module_can.system.all_max_temperature[0],
                can.module_can.system.all_min_temperature[0],
                sdc.get_sdc_state(), bus_voltage.get_voltage_pointer(),
-               contactors.get_state_pointer(), &can.master_general_state,
+               contactors.get_state_pointer(),
+               current_sense.get_value_pointer(), &can.master_general_state,
                &can.master_nested_state, &can.slave_general_state,
                &can.slave_nested_state, &can.duty_cycle_u, &can.duty_cycle_v,
                &can.duty_cycle_w) {
@@ -40,6 +42,7 @@ Board::Board()
         ethernet.send_sdc_data();
         ethernet.send_contactors_data();
         ethernet.send_bcu_data();
+        ethernet.send_current_sense();
     });
 
     Time::register_low_precision_alarm(100,
@@ -48,6 +51,7 @@ Board::Board()
     Time::register_low_precision_alarm(100, [&]() {
         sdc.read_state();
         bus_voltage.read();
+        current_sense.read();
     });
 }
 
