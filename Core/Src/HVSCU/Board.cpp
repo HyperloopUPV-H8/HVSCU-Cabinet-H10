@@ -5,22 +5,19 @@ namespace HVSCU {
 Board::Board()
     : imd(Pinout::imd_power_pin, Pinout::imd_measurement_high_side_pin),
       bus_voltage(Pinout::bus_voltage_measurement_pin),
-      contactors(
-          Pinout::contactor_ess_discharge_pin,
-          Pinout::contactor_inverter_discharge_pin,
-          Pinout::contactor_ess_charge_pin, Pinout::contactor_low_pin,
-          Pinout::contactor_high_pin, Pinout::contactor_precharge_pin,
-          bus_voltage.get_voltage(),
-          bus_voltage
-              .get_voltage()),  // can.module_can.system.total_voltage_volts),
+      contactors(Pinout::contactor_ess_discharge_pin,
+                 Pinout::contactor_inverter_discharge_pin,
+                 Pinout::contactor_ess_charge_pin, Pinout::contactor_low_pin,
+                 Pinout::contactor_high_pin, Pinout::contactor_precharge_pin,
+                 bus_voltage.get_voltage(), bus_voltage.get_voltage()),
       leds(Pinout::led_operational_pin, Pinout::led_fault_pin,
            Pinout::led_can_pin, Pinout::led_flash_pin, Pinout::led_sleep_pin,
            Pinout::led_full_charge_pin, Pinout::led_low_charge_pin),
       sdc(Pinout::imd_bypass_pin, Pinout::sdc_control_pin,
           Pinout::sdc_good_pin),
+      can(),
       stlib(HVSCU::Communication::Ethernet::local_ip.string_address,
             "255.255.0.0", "192.168.2.1"),
-      can(),
       ethernet(&can.module_can.system.total_voltage_volts,
                can.module_can.system.all_cells_voltage[0],
                can.module_can.system.all_module_voltage[0],
@@ -30,20 +27,23 @@ Board::Board()
                can.module_can.system.all_max_temperature[0],
                can.module_can.system.all_min_temperature[0],
                sdc.get_sdc_state(), bus_voltage.get_voltage_pointer(),
-               contactors.get_state_pointer(),
-                BCU_data::charge_voltage,
-               BCU_data::duty_u, BCU_data::duty_v, BCU_data::duty_w,
-               BCU_data::angular_velocity, BCU_data::ref_q, BCU_data::ref_d,
-               BCU_data::ref_speed, BCU_data::ref_switch_freq,
-               BCU_data::ref_dead_time, BCU_data::fixed_dc_link_vtg) {
+               contactors.get_state_pointer(), &can.master_general_state,
+               &can.master_nested_state, &can.slave_general_state,
+               &can.slave_nested_state, &can.duty_cycle_u, &can.duty_cycle_v,
+               &can.duty_cycle_w) {
     initialize_state_machine();
 
     can.start();
+
     Time::register_low_precision_alarm(100, [&]() {
         ethernet.send_supercaps_data();
         ethernet.send_sdc_data();
         ethernet.send_contactors_data();
+        ethernet.send_bcu_data();
     });
+
+    Time::register_low_precision_alarm(100,
+                                       [&]() { ethernet.send_bcu_data(); });
 
     Time::register_low_precision_alarm(100, [&]() {
         sdc.read_state();
@@ -118,6 +118,7 @@ void Board::update_operational() {
     } else if (ethernet.has_received_close_contactors) {
         contactors.close();
 
+        ethernet.has_received_charge_supercaps = false;
         ethernet.has_received_close_contactors = false;
     }
 
@@ -148,73 +149,36 @@ void Board::update_operational() {
 
         ethernet.has_received_sdc_enable = false;
     }
+
     if (ethernet.has_received_BCU_test_pwm) {
-        // Handle BCU test PWM logic here
-        char buffer[3] = {};
-        memcpy(buffer, &BCU_data::duty_u, sizeof(BCU_data::duty_u));
-        memcpy(buffer + 1, &BCU_data::duty_v, sizeof(BCU_data::duty_v));
-        memcpy(buffer + 2, &BCU_data::duty_w, sizeof(BCU_data::duty_w));
-        FDCAN::transmit(can.can_id, can.test_pwm.identifier, &buffer[0], can.test_pwm.data_length);
+        can.transmit_start_test_pwm(ethernet.requested_duty_cycle_u,
+                                    ethernet.requested_duty_cycle_v,
+                                    ethernet.requested_duty_cycle_w);
+
         ethernet.has_received_BCU_test_pwm = false;
-        }
+    }
 
-        if (ethernet.has_received_BCU_emulate_movement) {
-        // Handle BCU emulate movement logic here
-        char buffer[8] = {};
-        memcpy(buffer, &BCU_data::angular_velocity, sizeof(float));
-        memcpy(buffer + 4, &BCU_data::ref_q, sizeof(uint16_t));
-        memcpy(buffer + 6, &BCU_data::ref_d, sizeof(uint16_t));
-        FDCAN::transmit(can.can_id, can.emulate_movement.identifier, buffer, can.emulate_movement.data_length);
-        ethernet.has_received_BCU_emulate_movement = false;
-        }
+    if (ethernet.has_received_BCU_configure_commutation_parameters) {
+        can.transmit_configure_commutation_parameters(
+            ethernet.requested_commutation_frequency_hz,
+            ethernet.requested_dead_time_ns);
 
-        if (ethernet.has_received_BCU_current_control) {
-        // Handle BCU current control logic here
-        char buffer[4] = {};
-        memcpy(buffer, &BCU_data::ref_q, sizeof(uint16_t));
-        memcpy(buffer + 2, &BCU_data::ref_d, sizeof(uint16_t));
-        FDCAN::transmit(can.can_id, can.current_control.identifier, buffer, can.current_control.data_length);
-        ethernet.has_received_BCU_current_control = false;
-        }
+        ethernet.has_received_BCU_configure_commutation_parameters = false;
+    }
 
-        if (ethernet.has_received_BCU_velocity_control) {
-        // Handle BCU velocity control logic here
-        char buffer[4] = {};
-        memcpy(buffer, &BCU_data::ref_speed, sizeof(float));
-        FDCAN::transmit(can.can_id, can.velocity_control.identifier, buffer, can.velocity_control.data_length);
-        ethernet.has_received_BCU_velocity_control = false;
-        }
+    if (ethernet.has_received_BCU_stop) {
+        can.transmit_stop();
 
-        if (ethernet.has_received_BCU_set_pwm_params) {
-        // Handle BCU set PWM parameters logic here
-        char buffer[8] = {};
-        memcpy(buffer, &BCU_data::ref_switch_freq, sizeof(float));
-        memcpy(buffer + 4, &BCU_data::ref_dead_time, sizeof(float));
-        FDCAN::transmit(can.can_id, can.set_pwm_params.identifier, buffer, can.set_pwm_params.data_length);
-        ethernet.has_received_BCU_set_pwm_params = false;
-        }
-
-        if (ethernet.has_received_BCU_stop) {
-        // Handle BCU stop logic here
-        char buffer[1] = {0}; // Single byte to indicate stop command
-        FDCAN::transmit(can.can_id, can.stop.identifier, buffer, can.stop.data_length);
         ethernet.has_received_BCU_stop = false;
-        }
+    }
 
-        if (ethernet.has_received_BCU_set_fixed_dc_link_vtg) {
-        // Handle BCU set fixed DC link voltage logic here
-        char buffer[2] = {};
-        memcpy(buffer, &BCU_data::fixed_dc_link_vtg, sizeof(uint16_t));
-        FDCAN::transmit(can.can_id, can.set_fixed_dc_link_vtg.identifier, buffer, can.set_fixed_dc_link_vtg.data_length);
-        ethernet.has_received_BCU_set_fixed_dc_link_vtg = false;
-        }
+    if (ethernet.has_received_BCU_space_vector) {
+        can.transmit_start_space_vector(
+            ethernet.requested_modulation_index,
+            ethernet.requested_modulation_frequency_hz);
 
-        if (ethernet.has_received_BCU_unset_fixed_dc_link_vtg) {
-        // Handle BCU unset fixed DC link voltage logic here
-        char buffer[1] = {0}; // Single byte to indicate unset command
-        FDCAN::transmit(can.can_id, can.unset_fixed_dc_link_vtg.identifier, buffer, can.unset_fixed_dc_link_vtg.data_length);
-        ethernet.has_received_BCU_unset_fixed_dc_link_vtg = false;
-        }
+        ethernet.has_received_BCU_space_vector = false;
+    }
 }
 
 void Board::update_fault() {}

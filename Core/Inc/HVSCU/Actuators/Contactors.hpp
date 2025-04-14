@@ -55,6 +55,7 @@ class Contactors {
     bool charge_request_received{false};
     bool close_request_received{false};
     bool hold_request_received{false};
+    bool timeout_expired{false};
 
     const float &bus_voltage;
     const float &ess_voltage;

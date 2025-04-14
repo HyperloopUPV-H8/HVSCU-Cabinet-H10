@@ -3,22 +3,49 @@
 namespace HVSCU::Communication {
 
 CAN::CAN()
-    : can_id(FDCAN::inscribe<CANBitRatesSpeed::CAN_500_kbit,CANFormat::CAN_NORMAL_FORMAT,CANIdentifier::CAN_11_BIT_IDENTIFIER,CANMode::CAN_MODE_NORMAL>(FDCAN::fdcan1)),
+    : can_id(FDCAN::inscribe<
+             CANBitRatesSpeed::CAN_500_kbit, CANFormat::CAN_NORMAL_FORMAT,
+             CANIdentifier::CAN_11_BIT_IDENTIFIER, CANMode::CAN_MODE_NORMAL>(
+          FDCAN::fdcan1)),
       module_can(
           [&](CMS::Messages::CanPacket& packet) {
               static FDCAN::Packet last_packet{};
+              static uint16_t encoded_duty_cycle_u{0};
+              static uint16_t encoded_duty_cycle_v{0};
+              static uint16_t encoded_duty_cycle_w{0};
 
               bool got_something = FDCAN::read(can_id, &last_packet);
 
               if (got_something) {
-                if(last_packet.identifier >= 0x701){
-                    //handle BCU orders here
-                    handle_bcu_data(last_packet);
-                }else{
+                  switch (last_packet.identifier) {
+                      case state_id:
+                          memcpy(&master_general_state, &last_packet.rx_data[0],
+                                 sizeof(StateMachine::state_id));
+                          memcpy(&master_nested_state, &last_packet.rx_data[1],
+                                 sizeof(StateMachine::state_id));
+                          memcpy(&slave_general_state, &last_packet.rx_data[2],
+                                 sizeof(StateMachine::state_id));
+                          memcpy(&slave_nested_state, &last_packet.rx_data[3],
+                                 sizeof(StateMachine::state_id));
+                          break;
+                      case control_parameters_id:
+                          memcpy(&encoded_duty_cycle_u, &last_packet.rx_data[0],
+                                 sizeof(uint16_t));
+                          memcpy(&encoded_duty_cycle_v, &last_packet.rx_data[2],
+                                 sizeof(uint16_t));
+                          memcpy(&encoded_duty_cycle_w, &last_packet.rx_data[4],
+                                 sizeof(uint16_t));
+                          duty_cycle_u = (float)encoded_duty_cycle_u / 100.0f;
+                          duty_cycle_v = (float)encoded_duty_cycle_v / 100.0f;
+                          duty_cycle_w = (float)encoded_duty_cycle_w / 100.0f;
+                          break;
+                      default:
+                          break;
+                  }
+
                   packet.id = last_packet.identifier;
                   packet.length = DLC_to_length(last_packet.data_length);
                   packet.payload = last_packet.rx_data;
-                }
               }
 
               return got_something;
@@ -32,7 +59,6 @@ CAN::CAN()
           }) {}
 
 void CAN::start() {
-    FDCAN::start();
     module_can.start_module(1, 1);
     module_can.start_module(1, 2);
     module_can.start_module(1, 3);
@@ -45,34 +71,7 @@ void CAN::restart() {
 
     Time::set_timeout(1000, [&]() { start(); });
 }
-void CAN::handle_bcu_data(FDCAN::Packet& packet){
-    switch(packet.identifier){
-        case 0x709:
-            memcpy(&BCU_data::master_general_state, &packet.rx_data[0], sizeof(uint8_t));
-            memcpy(&BCU_data::master_nested_state, &packet.rx_data[1], sizeof(uint8_t));
-            memcpy(&BCU_data::slave_general_state, &packet.rx_data[2], sizeof(uint8_t));
-            memcpy(&BCU_data::slave_nested_state, &packet.rx_data[3], sizeof(uint8_t));
-            break;
-        case 0x710:
-            memcpy(BCU_data::control_params.data() + packet.rx_data[0], &packet.rx_data[1], sizeof(float));
-            break;
-        case 0x711:
-            memcpy(BCU_data::encoders_data.data() + packet.rx_data[0], &packet.rx_data[1], sizeof(float));
-            break;
-        case 0x712:
-            memcpy(&BCU_data::direction_speetec_1, &packet.rx_data[0], sizeof(uint8_t));
-            memcpy(&BCU_data::direction_speetec_2, &packet.rx_data[1], sizeof(uint8_t));
-            memcpy(&BCU_data::direction_speetec_3, &packet.rx_data[2], sizeof(uint8_t));
-            memcpy(&BCU_data::pod_in_booster_section, &packet.rx_data[3], sizeof(bool));
-            break;
-        case 0X713:
-            memcpy(BCU_data::inverters_data.data() + packet.rx_data[0], &packet.rx_data[1], sizeof(float));
-            break;
-        case 0x714:
-            memcpy(BCU_data::encoders_control.data() + packet.rx_data[0], &packet.rx_data[1], 8);
-        break;
-    }
-}
+
 void CAN::set_data_rate(CMS::Types::TxCycle_t tx_cycle) {
     module_can.change_module_tx_cycle(1, 1, tx_cycle);
     module_can.change_module_tx_cycle(1, 2, tx_cycle);
@@ -80,6 +79,48 @@ void CAN::set_data_rate(CMS::Types::TxCycle_t tx_cycle) {
 }
 
 void CAN::update() { module_can.update(); }
+
+void CAN::transmit_start_test_pwm(float duty_cycle_u, float duty_cycle_v,
+                                  float duty_cycle_w) {
+    uint16_t encoded_duty_cycle_u = (uint16_t)(duty_cycle_u * 100.0f);
+    uint16_t encoded_duty_cycle_v = (uint16_t)(duty_cycle_v * 100.0f);
+    uint16_t encoded_duty_cycle_w = (uint16_t)(duty_cycle_w * 100.0f);
+
+    std::array<uint8_t, 6> payload{};
+    memcpy(payload.data(), &encoded_duty_cycle_u, sizeof(uint16_t));
+    memcpy(payload.data() + 2, &encoded_duty_cycle_v, sizeof(uint16_t));
+    memcpy(payload.data() + 4, &encoded_duty_cycle_w, sizeof(uint16_t));
+    FDCAN::transmit(can_id, start_test_pwm_id,
+                    reinterpret_cast<const char*>(payload.data()),
+                    length_to_DLC(payload.size()));
+}
+
+void CAN::transmit_configure_commutation_parameters(
+    uint32_t commutation_frequency_hz, uint32_t dead_time_ns) {
+    std::array<uint8_t, 8> payload{};
+    memcpy(payload.data(), &commutation_frequency_hz, sizeof(uint32_t));
+    memcpy(payload.data() + 4, &dead_time_ns, sizeof(uint32_t));
+    FDCAN::transmit(can_id, configure_commutation_parameters_id,
+                    reinterpret_cast<const char*>(payload.data()),
+                    length_to_DLC(payload.size()));
+}
+
+void CAN::transmit_stop() {
+    std::array<uint8_t, 0> payload{};
+    FDCAN::transmit(can_id, stop_control_id,
+                    reinterpret_cast<const char*>(payload.data()),
+                    FDCAN::DLC::BYTES_0);
+}
+
+void CAN::transmit_start_space_vector(float modulation_index,
+                                      float modulation_frequency_hz) {
+    std::array<uint8_t, 8> payload{};
+    memcpy(payload.data(), &modulation_index, sizeof(float));
+    memcpy(payload.data() + 4, &modulation_frequency_hz, sizeof(float));
+    FDCAN::transmit(can_id, start_space_vector_id,
+                    reinterpret_cast<const char*>(payload.data()),
+                    length_to_DLC(payload.size()));
+}
 
 inline constexpr uint8_t CAN::DLC_to_length(const ::FDCAN::DLC dlc) noexcept {
     switch (dlc) {

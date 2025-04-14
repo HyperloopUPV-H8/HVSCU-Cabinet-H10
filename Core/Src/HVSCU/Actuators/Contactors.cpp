@@ -57,20 +57,22 @@ Contactors::Contactors(Pin &ess_discharge_pin, Pin &discharge_pin,
     });
 
     contactors_state.add_transition(State::Charged, State::Precharge, [&]() {
-        return close_request_received &&
-               (bus_voltage < ess_voltage * SAFE_BUS_TO_ESS_RATIO);
+        return close_request_received;  //&&
+                                        //(bus_voltage < ess_voltage *
+                                        // SAFE_BUS_TO_ESS_RATIO);
     });
 
-    contactors_state.add_transition(State::Charged, State::Close, [&]() {
-        return close_request_received &&
-               (bus_voltage >= ess_voltage * SAFE_BUS_TO_ESS_RATIO);
-    });
+    // contactors_state.add_transition(State::Charged, State::Close, [&]() {
+    //     return close_request_received &&
+    //            (bus_voltage >= ess_voltage * SAFE_BUS_TO_ESS_RATIO);
+    // });
 
     contactors_state.add_transition(State::Precharge, State::Charged,
                                     [&]() { return hold_request_received; });
 
     contactors_state.add_transition(State::Precharge, State::Close, [&]() {
-        return bus_voltage >= ess_voltage * SAFE_BUS_TO_ESS_RATIO;
+        return timeout_expired;  // bus_voltage >= ess_voltage *
+                                 // SAFE_BUS_TO_ESS_RATIO;
     });
 
     contactors_state.add_transition(State::Close, State::Charged,
@@ -101,12 +103,17 @@ Contactors::Contactors(Pin &ess_discharge_pin, Pin &discharge_pin,
     contactors_state.add_enter_action([&]() { close_precharge_circuit(); },
                                       State::Precharge);
 
+    contactors_state.add_low_precision_cyclic_action(
+        [&]() { timeout_expired = true; }, std::chrono::milliseconds(5000),
+        State::Precharge);
+
     contactors_state.add_enter_action(
         [&]() {
             close_high_voltage_circuit();
             hold_request_received = false;
             charge_request_received = false;
             close_request_received = false;
+            timeout_expired = false;
         },
         State::Close);
 

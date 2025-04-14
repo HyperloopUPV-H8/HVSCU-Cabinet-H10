@@ -9,7 +9,6 @@
 #include "HVSCU/Pinout.hpp"
 #include "HVSCU/Sensors/BusVoltage.hpp"
 #include "HVSCU/Sensors/IMD.hpp"
-#include "BCU_data/BCU_data.hpp"
 #include "ST-LIB.hpp"
 
 namespace HVSCU {
@@ -36,11 +35,10 @@ class Board {
     Actuators::LEDs leds;
     Actuators::SDC sdc;
 
+    Communication::CAN can;
+
     STLIBHandle stlib;
 
-    // This is here to avoid initialization reorder warning and still be able to
-    // give it the sensor data for udp in the initialization list
-    Communication::CAN can;
     Communication::Ethernet ethernet;
 
     void initialize_state_machine();
