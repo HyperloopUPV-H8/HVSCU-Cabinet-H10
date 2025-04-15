@@ -133,9 +133,9 @@ class Ethernet {
                                &requested_modulation_index,
                                &requested_modulation_frequency_hz};
 
-    HeapOrder BCU_fix_dc_link_voltage{1795, on_BCU_fix_dc_link_voltage,
+    HeapOrder BCU_fix_dc_link_voltage{1791, on_BCU_fix_dc_link_voltage,
                                       &requested_dc_link_voltage};
-    HeapOrder BCU_unfix_dc_link_voltage{1796, on_BCU_unfix_dc_link_voltage};
+    HeapOrder BCU_unfix_dc_link_voltage{1790, on_BCU_unfix_dc_link_voltage};
 
     HeapPacket total_voltage{1600, total_supercaps_voltage};
 
