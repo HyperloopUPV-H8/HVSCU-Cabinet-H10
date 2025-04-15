@@ -5,6 +5,9 @@ set(EXECUTABLE ${PROJECT_NAME}.elf)
 set(STLIB_DIR ${CMAKE_CURRENT_LIST_DIR}/deps/ST-LIB)
 set(CMSLIB_DIR ${CMAKE_CURRENT_LIST_DIR}/deps/CMS-LIB)
 
+set(CMAKE_CXX_FLAGS_RELEASE "-O1")
+set(CMAKE_C_FLAGS_RELEASE "-O1")
+
 option(USE_ETHERNET "Enable ethernet peripheral" OFF)
 option(TARGET_NUCLEO "Targets the STM32H723 Nucleo development board" OFF)
 

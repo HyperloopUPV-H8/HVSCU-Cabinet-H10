@@ -33,6 +33,8 @@ class Board {
     Sensors::BusVoltage bus_voltage;
     Sensors::CurrentSense current_sense;
 
+    float ess_voltage{0.0f};
+
     Actuators::Contactors contactors;
     Actuators::LEDs leds;
     Actuators::SDC sdc;

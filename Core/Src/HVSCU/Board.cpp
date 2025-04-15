@@ -10,7 +10,7 @@ Board::Board()
                  Pinout::contactor_inverter_discharge_pin,
                  Pinout::contactor_ess_charge_pin, Pinout::contactor_low_pin,
                  Pinout::contactor_high_pin, Pinout::contactor_precharge_pin,
-                 bus_voltage.get_voltage(), bus_voltage.get_voltage()),
+                 bus_voltage.get_voltage(), ess_voltage),
       leds(Pinout::led_operational_pin, Pinout::led_fault_pin,
            Pinout::led_can_pin, Pinout::led_flash_pin, Pinout::led_sleep_pin,
            Pinout::led_full_charge_pin, Pinout::led_low_charge_pin),
@@ -52,6 +52,7 @@ Board::Board()
         sdc.read_state();
         bus_voltage.read();
         current_sense.read();
+        ess_voltage = can.module_can.system.total_voltage_volts;
     });
 }
 
