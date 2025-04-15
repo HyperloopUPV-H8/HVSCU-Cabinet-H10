@@ -35,6 +35,8 @@ class Ethernet {
     inline static bool has_received_BCU_configure_commutation_parameters{false};
     inline static bool has_received_BCU_stop{false};
     inline static bool has_received_BCU_space_vector{false};
+    inline static bool has_received_BCU_fix_dc_link_voltage{false};
+    inline static bool has_received_BCU_unfix_dc_link_voltage{false};
 
     float charge_voltage{0.0f};
     ImdBypassState imd_bypass_state{ImdBypassState::DisableIMD};
@@ -49,6 +51,8 @@ class Ethernet {
 
     float requested_modulation_index{0.0f};
     float requested_modulation_frequency_hz{0.0f};
+
+    float requested_dc_link_voltage{0.0f};
 
    private:
     ServerSocket control_station_tcp;
@@ -74,6 +78,11 @@ class Ethernet {
     float *duty_cycle_u;
     float *duty_cycle_v;
     float *duty_cycle_w;
+    float *average_dc_link_voltage;
+    float *dc_link_voltage_1;
+    float *dc_link_voltage_2;
+    float *dc_link_voltage_3;
+    float *dc_link_voltage_4;
 
     static void on_close_contactors() { has_received_close_contactors = true; }
 
@@ -104,6 +113,13 @@ class Ethernet {
 
     static void on_BCU_space_vector() { has_received_BCU_space_vector = true; }
 
+    static void on_BCU_fix_dc_link_voltage() {
+        has_received_BCU_fix_dc_link_voltage = true;
+    }
+    static void on_BCU_unfix_dc_link_voltage() {
+        has_received_BCU_unfix_dc_link_voltage = true;
+    }
+
     HeapOrder BCU_test_pwm{1799, on_BCU_test_pwm, &requested_duty_cycle_u,
                            &requested_duty_cycle_v, &requested_duty_cycle_w};
 
@@ -116,6 +132,10 @@ class Ethernet {
     HeapOrder BCU_space_vector{1793, on_BCU_space_vector,
                                &requested_modulation_index,
                                &requested_modulation_frequency_hz};
+
+    HeapOrder BCU_fix_dc_link_voltage{1795, on_BCU_fix_dc_link_voltage,
+                                      &requested_dc_link_voltage};
+    HeapOrder BCU_unfix_dc_link_voltage{1796, on_BCU_unfix_dc_link_voltage};
 
     HeapPacket total_voltage{1600, total_supercaps_voltage};
 
@@ -305,6 +325,13 @@ class Ethernet {
     HeapPacket bcu_control_parameters_packet{1700, duty_cycle_u, duty_cycle_v,
                                              duty_cycle_w};
 
+    HeapPacket bcu_dc_link_voltage_packet{1702,
+                                          average_dc_link_voltage,
+                                          dc_link_voltage_1,
+                                          dc_link_voltage_2,
+                                          dc_link_voltage_3,
+                                          dc_link_voltage_4};
+
    public:
     Ethernet(float *total_supercaps_voltage,
              std::array<std::array<float *, 48>, 3> cells_voltage,
@@ -320,7 +347,10 @@ class Ethernet {
              StateMachine::state_id *master_nested_state,
              StateMachine::state_id *slave_general_state,
              StateMachine::state_id *slave_nested_state, float *duty_cycle_u,
-             float *duty_cycle_v, float *duty_cycle_w);
+             float *duty_cycle_v, float *duty_cycle_w,
+             float *average_dc_link_voltage, float *dc_link_voltage_1,
+             float *dc_link_voltage_2, float *dc_link_voltage_3,
+             float *dc_link_voltage_4);
 
     void send_supercaps_data();
     void send_sdc_data();

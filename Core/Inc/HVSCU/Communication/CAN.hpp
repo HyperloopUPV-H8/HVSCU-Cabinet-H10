@@ -17,6 +17,9 @@ class CAN {
     constexpr static uint16_t stop_control_id{0x724};
     constexpr static uint16_t control_parameters_id{0x725};
     constexpr static uint16_t start_space_vector_id{0x726};
+    constexpr static uint16_t fix_dc_link_voltage_id{0x727};
+    constexpr static uint16_t unfix_dc_link_voltage_id{0x728};
+    constexpr static uint16_t dc_link_id{0x729};
 
    public:
     StateMachine::state_id master_general_state{0};
@@ -27,6 +30,12 @@ class CAN {
     float duty_cycle_u{0.0f};
     float duty_cycle_v{0.0f};
     float duty_cycle_w{0.0f};
+
+    float average_dc_link_voltage{0.0f};
+    float dc_link_voltage_1{0.0f};
+    float dc_link_voltage_2{0.0f};
+    float dc_link_voltage_3{0.0f};
+    float dc_link_voltage_4{0.0f};
 
     uint8_t can_id;
 
@@ -50,6 +59,9 @@ class CAN {
 
     void transmit_start_space_vector(float modulation_index,
                                      float modulation_frequency_hz);
+
+    void transmit_fix_dc_link_voltage(float voltage);
+    void transmit_unfix_dc_link_voltage();
 };
 
 };  // namespace HVSCU::Communication

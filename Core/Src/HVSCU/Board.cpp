@@ -32,7 +32,9 @@ Board::Board()
                current_sense.get_value_pointer(), &can.master_general_state,
                &can.master_nested_state, &can.slave_general_state,
                &can.slave_nested_state, &can.duty_cycle_u, &can.duty_cycle_v,
-               &can.duty_cycle_w) {
+               &can.duty_cycle_w, &can.average_dc_link_voltage,
+               &can.dc_link_voltage_1, &can.dc_link_voltage_2,
+               &can.dc_link_voltage_3, &can.dc_link_voltage_4) {
     initialize_state_machine();
 
     can.start();
@@ -183,6 +185,18 @@ void Board::update_operational() {
             ethernet.requested_modulation_frequency_hz);
 
         ethernet.has_received_BCU_space_vector = false;
+    }
+
+    if (ethernet.has_received_BCU_fix_dc_link_voltage) {
+        can.transmit_fix_dc_link_voltage(ethernet.requested_dc_link_voltage);
+
+        ethernet.has_received_BCU_fix_dc_link_voltage = false;
+    }
+
+    if (ethernet.has_received_BCU_unfix_dc_link_voltage) {
+        can.transmit_unfix_dc_link_voltage();
+
+        ethernet.has_received_BCU_unfix_dc_link_voltage = false;
     }
 }
 

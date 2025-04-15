@@ -15,7 +15,9 @@ Ethernet::Ethernet(
     StateMachine::state_id *master_nested_state,
     StateMachine::state_id *slave_general_state,
     StateMachine::state_id *slave_nested_state, float *duty_cycle_u,
-    float *duty_cycle_v, float *duty_cycle_w)
+    float *duty_cycle_v, float *duty_cycle_w, float *average_dc_link_voltage,
+    float *dc_link_voltage_1, float *dc_link_voltage_2,
+    float *dc_link_voltage_3, float *dc_link_voltage_4)
     : control_station_tcp(local_ip, tcp_server_port),
       control_station_udp(local_ip, udp_port, control_station_ip, udp_port),
       sdc_good(sdc_good),
@@ -36,7 +38,12 @@ Ethernet::Ethernet(
       slave_nested_state(slave_nested_state),
       duty_cycle_u(duty_cycle_u),
       duty_cycle_v(duty_cycle_v),
-      duty_cycle_w(duty_cycle_w) {}
+      duty_cycle_w(duty_cycle_w),
+      average_dc_link_voltage(average_dc_link_voltage),
+      dc_link_voltage_1(dc_link_voltage_1),
+      dc_link_voltage_2(dc_link_voltage_2),
+      dc_link_voltage_3(dc_link_voltage_3),
+      dc_link_voltage_4(dc_link_voltage_4) {}
 
 void Ethernet::send_supercaps_data() {
     control_station_udp.send_packet(total_voltage);
@@ -61,6 +68,7 @@ void Ethernet::send_current_sense() {
 void Ethernet::send_bcu_data() {
     control_station_udp.send_packet(bcu_state_packet);
     control_station_udp.send_packet(bcu_control_parameters_packet);
+    control_station_udp.send_packet(bcu_dc_link_voltage_packet);
 }
 
 bool Ethernet::is_connected() { return control_station_tcp.is_connected(); }

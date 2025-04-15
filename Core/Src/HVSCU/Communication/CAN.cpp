@@ -13,6 +13,10 @@ CAN::CAN()
               static uint16_t encoded_duty_cycle_u{0};
               static uint16_t encoded_duty_cycle_v{0};
               static uint16_t encoded_duty_cycle_w{0};
+              static uint8_t encoded_dc_link_voltage_1{0};
+              static uint8_t encoded_dc_link_voltage_2{0};
+              static uint8_t encoded_dc_link_voltage_3{0};
+              static uint8_t encoded_dc_link_voltage_4{0};
 
               bool got_something = FDCAN::read(can_id, &last_packet);
 
@@ -38,6 +42,22 @@ CAN::CAN()
                           duty_cycle_u = (float)encoded_duty_cycle_u / 100.0f;
                           duty_cycle_v = (float)encoded_duty_cycle_v / 100.0f;
                           duty_cycle_w = (float)encoded_duty_cycle_w / 100.0f;
+                          break;
+                      case dc_link_id:
+                          memcpy(&average_dc_link_voltage,
+                                 &last_packet.rx_data[0], sizeof(float));
+                          memcpy(&encoded_dc_link_voltage_1,
+                                 &last_packet.rx_data[4], sizeof(uint8_t));
+                          memcpy(&encoded_dc_link_voltage_2,
+                                 &last_packet.rx_data[5], sizeof(uint8_t));
+                          memcpy(&encoded_dc_link_voltage_3,
+                                 &last_packet.rx_data[6], sizeof(uint8_t));
+                          memcpy(&encoded_dc_link_voltage_4,
+                                 &last_packet.rx_data[7], sizeof(uint8_t));
+                          dc_link_voltage_1 = (float)encoded_dc_link_voltage_1;
+                          dc_link_voltage_2 = (float)encoded_dc_link_voltage_2;
+                          dc_link_voltage_3 = (float)encoded_dc_link_voltage_3;
+                          dc_link_voltage_4 = (float)encoded_dc_link_voltage_4;
                           break;
                       default:
                           break;
@@ -120,6 +140,21 @@ void CAN::transmit_start_space_vector(float modulation_index,
     FDCAN::transmit(can_id, start_space_vector_id,
                     reinterpret_cast<const char*>(payload.data()),
                     length_to_DLC(payload.size()));
+}
+
+void CAN::transmit_fix_dc_link_voltage(float voltage) {
+    std::array<uint8_t, 4> payload{};
+    memcpy(payload.data(), &voltage, sizeof(float));
+    FDCAN::transmit(can_id, fix_dc_link_voltage_id,
+                    reinterpret_cast<const char*>(payload.data()),
+                    length_to_DLC(payload.size()));
+}
+
+void CAN::transmit_unfix_dc_link_voltage() {
+    std::array<uint8_t, 0> payload{};
+    FDCAN::transmit(can_id, unfix_dc_link_voltage_id,
+                    reinterpret_cast<const char*>(payload.data()),
+                    FDCAN::DLC::BYTES_0);
 }
 
 inline constexpr uint8_t CAN::DLC_to_length(const ::FDCAN::DLC dlc) noexcept {
