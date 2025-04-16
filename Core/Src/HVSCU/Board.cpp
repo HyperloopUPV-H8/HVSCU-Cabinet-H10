@@ -34,7 +34,9 @@ Board::Board()
                &can.slave_nested_state, &can.duty_cycle_u, &can.duty_cycle_v,
                &can.duty_cycle_w, &can.average_dc_link_voltage,
                &can.dc_link_voltage_1, &can.dc_link_voltage_2,
-               &can.dc_link_voltage_3, &can.dc_link_voltage_4) {
+               &can.dc_link_voltage_3, &can.dc_link_voltage_4,
+               &can.average_current_u, &can.average_current_v,
+               &can.average_current_w) {
     initialize_state_machine();
 
     can.start();

@@ -17,6 +17,9 @@ CAN::CAN()
               static uint8_t encoded_dc_link_voltage_2{0};
               static uint8_t encoded_dc_link_voltage_3{0};
               static uint8_t encoded_dc_link_voltage_4{0};
+              static uint16_t encoded_average_current_u{0};
+              static uint16_t encoded_average_current_v{0};
+              static uint16_t encoded_average_current_w{0};
 
               bool got_something = FDCAN::read(can_id, &last_packet);
 
@@ -58,6 +61,20 @@ CAN::CAN()
                           dc_link_voltage_2 = (float)encoded_dc_link_voltage_2;
                           dc_link_voltage_3 = (float)encoded_dc_link_voltage_3;
                           dc_link_voltage_4 = (float)encoded_dc_link_voltage_4;
+                          break;
+                      case current_sense_id:
+                          memcpy(&encoded_average_current_u,
+                                 &last_packet.rx_data[0], sizeof(uint16_t));
+                          memcpy(&encoded_average_current_v,
+                                 &last_packet.rx_data[2], sizeof(uint16_t));
+                          memcpy(&encoded_average_current_w,
+                                 &last_packet.rx_data[4], sizeof(uint16_t));
+                          average_current_u =
+                              (double)encoded_average_current_u / 100.0;
+                          average_current_v =
+                              (double)encoded_average_current_v / 100.0;
+                          average_current_w =
+                              (double)encoded_average_current_w / 100.0;
                           break;
                       default:
                           break;

@@ -83,6 +83,9 @@ class Ethernet {
     float *dc_link_voltage_2;
     float *dc_link_voltage_3;
     float *dc_link_voltage_4;
+    double *average_current_u;
+    double *average_current_v;
+    double *average_current_w;
 
     static void on_close_contactors() { has_received_close_contactors = true; }
 
@@ -332,6 +335,9 @@ class Ethernet {
                                           dc_link_voltage_3,
                                           dc_link_voltage_4};
 
+    HeapPacket bcu_current_sense_packet{1703, average_current_u,
+                                        average_current_v, average_current_w};
+
    public:
     Ethernet(float *total_supercaps_voltage,
              std::array<std::array<float *, 48>, 3> cells_voltage,
@@ -350,7 +356,8 @@ class Ethernet {
              float *duty_cycle_v, float *duty_cycle_w,
              float *average_dc_link_voltage, float *dc_link_voltage_1,
              float *dc_link_voltage_2, float *dc_link_voltage_3,
-             float *dc_link_voltage_4);
+             float *dc_link_voltage_4, double *average_current_u,
+             double *average_current_v, double *average_current_w);
 
     void send_supercaps_data();
     void send_sdc_data();

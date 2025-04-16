@@ -20,6 +20,7 @@ class CAN {
     constexpr static uint16_t fix_dc_link_voltage_id{0x727};
     constexpr static uint16_t unfix_dc_link_voltage_id{0x728};
     constexpr static uint16_t dc_link_id{0x729};
+    constexpr static uint16_t current_sense_id{0x72A};
 
    public:
     StateMachine::state_id master_general_state{0};
@@ -36,6 +37,10 @@ class CAN {
     float dc_link_voltage_2{0.0f};
     float dc_link_voltage_3{0.0f};
     float dc_link_voltage_4{0.0f};
+
+    double average_current_u{0.0};
+    double average_current_v{0.0};
+    double average_current_w{0.0};
 
     uint8_t can_id;
 
