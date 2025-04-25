@@ -45,12 +45,10 @@ Board::Board()
         ethernet.send_supercaps_data();
         ethernet.send_sdc_data();
         ethernet.send_contactors_data();
-        ethernet.send_bcu_data();
         ethernet.send_current_sense();
     });
 
-    Time::register_low_precision_alarm(100,
-                                       [&]() { ethernet.send_bcu_data(); });
+
 
     Time::register_low_precision_alarm(100, [&]() {
         sdc.read_state();
