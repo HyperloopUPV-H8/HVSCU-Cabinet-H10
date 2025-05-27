@@ -11,6 +11,7 @@ Board::Board()
                  Pinout::contactor_ess_charge_pin, Pinout::contactor_low_pin,
                  Pinout::contactor_high_pin, Pinout::contactor_precharge_pin,
                  bus_voltage.get_voltage(), ess_voltage),
+
       leds(Pinout::led_operational_pin, Pinout::led_fault_pin,
            Pinout::led_can_pin, Pinout::led_flash_pin, Pinout::led_sleep_pin,
            Pinout::led_full_charge_pin, Pinout::led_low_charge_pin),
@@ -45,17 +46,17 @@ Board::Board()
         ethernet.send_supercaps_data();
         ethernet.send_sdc_data();
         ethernet.send_contactors_data();
-        ethernet.send_current_sense();
     });
 
-
+    Time::register_low_precision_alarm(1, [&]() { send_ethernet_1khz = true; });
 
     Time::register_low_precision_alarm(100, [&]() {
         sdc.read_state();
         bus_voltage.read();
-        current_sense.read();
         ess_voltage = can.module_can.system.total_voltage_volts;
     });
+
+    Time::register_low_precision_alarm(1, [&]() { current_sense.read(); });
 }
 
 void Board::initialize_state_machine() {
@@ -111,6 +112,12 @@ void Board::update() {
 void Board::update_connecting() {}
 
 void Board::update_operational() {
+    if (send_ethernet_1khz) {
+        ethernet.send_current_sense();
+
+        send_ethernet_1khz = false;
+    }
+
     if (ethernet.has_received_open_contactors) {
         contactors.open();
 

@@ -29,6 +29,8 @@ class Board {
     enum States : uint8_t { Connecting = 0, Operational = 1, Fault = 2 };
     StateMachine general_state_machine;
 
+    volatile bool send_ethernet_1khz{false};
+
     Sensors::IMD imd;
     Sensors::BusVoltage bus_voltage;
     Sensors::CurrentSense current_sense;
