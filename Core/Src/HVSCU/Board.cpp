@@ -37,15 +37,18 @@ Board::Board()
                &can.dc_link_voltage_1, &can.dc_link_voltage_2,
                &can.dc_link_voltage_3, &can.dc_link_voltage_4,
                &can.average_current_u, &can.average_current_v,
-               &can.average_current_w) {
+               &can.average_current_w, imd.get_state_pointer(),
+               imd.get_isolation_resistance_pointer()) {
     initialize_state_machine();
 
     can.start();
+    imd.turn_on();
 
     Time::register_low_precision_alarm(100, [&]() {
         ethernet.send_supercaps_data();
         ethernet.send_sdc_data();
         ethernet.send_contactors_data();
+        ethernet.send_imd_data();
     });
 
     Time::register_low_precision_alarm(1, [&]() { send_ethernet_1khz = true; });

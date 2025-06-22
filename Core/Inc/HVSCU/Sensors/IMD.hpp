@@ -39,6 +39,9 @@ class IMD {
     const State &get_state() const;
     const float &get_isolation_resistance() const;
 
+    State *get_state_pointer();
+    float *get_isolation_resistance_pointer();
+
     void update();
 };
 

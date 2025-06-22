@@ -29,6 +29,9 @@ const float &IMD::get_isolation_resistance() const {
     return isolation_resistance;
 }
 
+IMD::State *IMD::get_state_pointer() { return &state; }
+float *IMD::get_isolation_resistance_pointer() { return &isolation_resistance; }
+
 #define Kohms(ohms) (ohms * 1000000.0f)
 
 inline float duty_cycle_to_resistance(const float &duty_cycle) {
@@ -41,6 +44,7 @@ inline float duty_cycle_to_resistance(const float &duty_cycle) {
 }
 
 void IMD::update() {
+    output.read();
     if (output_frequency <= SHORTCIRCUIT_STATE_FREQ_THRESHOLD) {
         state = IMD::State::ShortCircuit;
         isolation_resistance = 0.0f;

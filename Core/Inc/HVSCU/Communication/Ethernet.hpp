@@ -1,6 +1,7 @@
 #pragma once
 
 #include "HVSCU/Actuators/Contactors.hpp"
+#include "HVSCU/Sensors/IMD.hpp"
 #include "ST-LIB.hpp"
 
 namespace HVSCU::Communication {
@@ -86,6 +87,9 @@ class Ethernet {
     double *average_current_u;
     double *average_current_v;
     double *average_current_w;
+
+    Sensors::IMD::State *imd_state;
+    float *imd_isolation_resistance;
 
     static void on_close_contactors() { has_received_close_contactors = true; }
 
@@ -338,6 +342,8 @@ class Ethernet {
     HeapPacket bcu_current_sense_packet{1703, average_current_u,
                                         average_current_v, average_current_w};
 
+    HeapPacket imd_state_packet{1610, imd_isolation_resistance, imd_state};
+
    public:
     Ethernet(float *total_supercaps_voltage,
              std::array<std::array<float *, 48>, 3> cells_voltage,
@@ -357,12 +363,14 @@ class Ethernet {
              float *average_dc_link_voltage, float *dc_link_voltage_1,
              float *dc_link_voltage_2, float *dc_link_voltage_3,
              float *dc_link_voltage_4, double *average_current_u,
-             double *average_current_v, double *average_current_w);
+             double *average_current_v, double *average_current_w,
+             Sensors::IMD::State *imd_state, float *imd_isolation_resistance);
 
     void send_supercaps_data();
     void send_sdc_data();
     void send_contactors_data();
     void send_current_sense();
+    void send_imd_data();
     void send_bcu_data();
     bool is_connected();
 };

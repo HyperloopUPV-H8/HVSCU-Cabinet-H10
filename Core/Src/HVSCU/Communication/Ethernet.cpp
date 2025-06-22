@@ -19,7 +19,8 @@ Ethernet::Ethernet(
     float *dc_link_voltage_1, float *dc_link_voltage_2,
     float *dc_link_voltage_3, float *dc_link_voltage_4,
     double *average_current_u, double *average_current_v,
-    double *average_current_w)
+    double *average_current_w, Sensors::IMD::State *imd_state,
+    float *imd_isolation_resistance)
     : control_station_tcp(local_ip, tcp_server_port),
       control_station_udp(local_ip, udp_port, control_station_ip, udp_port),
       sdc_good(sdc_good),
@@ -48,7 +49,9 @@ Ethernet::Ethernet(
       dc_link_voltage_4(dc_link_voltage_4),
       average_current_u(average_current_u),
       average_current_v(average_current_v),
-      average_current_w(average_current_w) {}
+      average_current_w(average_current_w),
+      imd_state(imd_state),
+      imd_isolation_resistance(imd_isolation_resistance) {}
 
 void Ethernet::send_supercaps_data() {
     control_station_udp.send_packet(total_voltage);
@@ -77,5 +80,10 @@ void Ethernet::send_bcu_data() {
     control_station_udp.send_packet(bcu_current_sense_packet);
 }
 
+void Ethernet::send_imd_data() {
+    control_station_udp.send_packet(imd_state_packet);
+}
+
 bool Ethernet::is_connected() { return control_station_tcp.is_connected(); }
+
 };  // namespace HVSCU::Communication
