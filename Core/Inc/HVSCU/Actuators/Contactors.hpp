@@ -15,7 +15,7 @@ class Contactors {
     };
 
    private:
-    constexpr static float SAFE_BUS_TO_ESS_RATIO{0.9f};
+    constexpr static float SAFE_VOLTAGE_DIFF{40.0f};
     constexpr static uint32_t CHECK_PERIOD_MS{100};
 
     class NormallyOpenContactor {

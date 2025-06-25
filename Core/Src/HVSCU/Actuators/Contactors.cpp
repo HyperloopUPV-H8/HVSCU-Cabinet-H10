@@ -49,7 +49,7 @@ Contactors::Contactors(Pin &ess_discharge_pin, Pin &discharge_pin,
     });
 
     contactors_state.add_transition(State::Charging, State::Charged, [&]() {
-        return ess_voltage >= charge_voltage;
+        return ess_voltage >= charge_voltage || hold_request_received;
     });
 
     contactors_state.add_transition(State::Charged, State::Charging, [&]() {
@@ -57,22 +57,19 @@ Contactors::Contactors(Pin &ess_discharge_pin, Pin &discharge_pin,
     });
 
     contactors_state.add_transition(State::Charged, State::Precharge, [&]() {
-        return close_request_received;  //&&
-                                        //(bus_voltage < ess_voltage *
-                                        // SAFE_BUS_TO_ESS_RATIO);
+        return (bus_voltage < ess_voltage - SAFE_VOLTAGE_DIFF);
     });
 
-    // contactors_state.add_transition(State::Charged, State::Close, [&]() {
-    //     return close_request_received &&
-    //            (bus_voltage >= ess_voltage * SAFE_BUS_TO_ESS_RATIO);
-    // });
+    contactors_state.add_transition(State::Charged, State::Close, [&]() {
+        return close_request_received &&
+               (bus_voltage >= ess_voltage - SAFE_VOLTAGE_DIFF);
+    });
 
     contactors_state.add_transition(State::Precharge, State::Charged,
                                     [&]() { return hold_request_received; });
 
     contactors_state.add_transition(State::Precharge, State::Close, [&]() {
-        return timeout_expired;  // bus_voltage >= ess_voltage *
-                                 // SAFE_BUS_TO_ESS_RATIO;
+        return bus_voltage >= ess_voltage - SAFE_VOLTAGE_DIFF;
     });
 
     contactors_state.add_transition(State::Close, State::Charged,

@@ -122,6 +122,13 @@ void Board::update_operational() {
         contactors.open();
 
         ethernet.has_received_open_contactors = false;
+        ethernet.has_received_hold_supercaps = false;
+        ethernet.has_received_charge_supercaps = false;
+        ethernet.has_received_close_contactors = false;
+    } else if (ethernet.has_received_hold_supercaps) {
+        contactors.hold_charge();
+
+        ethernet.has_received_hold_supercaps = false;
         ethernet.has_received_charge_supercaps = false;
         ethernet.has_received_close_contactors = false;
     } else if (ethernet.has_received_charge_supercaps) {
@@ -208,5 +215,4 @@ void Board::update_operational() {
 }
 
 void Board::update_fault() {}
-
 };  // namespace HVSCU

@@ -26,6 +26,7 @@ class Ethernet {
 
     inline static bool has_received_close_contactors{false};
     inline static bool has_received_open_contactors{false};
+    inline static bool has_received_hold_supercaps{false};
     inline static bool has_received_charge_supercaps{false};
     inline static bool has_received_reset_supercaps{false};
     inline static bool has_received_imd_bypass{false};
@@ -91,6 +92,8 @@ class Ethernet {
 
     static void on_open_contactors() { has_received_open_contactors = true; }
 
+    static void on_hold_supercaps() { has_received_hold_supercaps = true; }
+
     static void on_charge_supercaps() { has_received_charge_supercaps = true; }
 
     static void on_reset_supercaps() { has_received_reset_supercaps = true; }
@@ -105,6 +108,7 @@ class Ethernet {
     HeapOrder reset_supercaps{1696, on_reset_supercaps};
     HeapOrder imd_bypass{1695, on_imd_bypass, &imd_bypass_state};
     HeapOrder sdc_enalbe{1694, on_sdc_enable, &sdc_enable_state};
+    HeapOrder hold_supercaps{1693, on_hold_supercaps};
 
     static void on_BCU_test_pwm() { has_received_BCU_test_pwm = true; }
 
