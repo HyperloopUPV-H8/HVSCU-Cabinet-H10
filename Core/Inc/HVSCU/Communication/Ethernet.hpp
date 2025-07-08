@@ -19,6 +19,7 @@ class Ethernet {
 
     inline static const IPV4 local_ip{"192.168.2.16"};
     inline static const IPV4 control_station_ip{"192.168.0.9"};
+    inline static const IPV4 bcu_ip{"192.168.2.17"};
 
     inline static const uint16_t tcp_server_port{50500};
     inline static const uint16_t tcp_client_port{50401};
@@ -32,35 +33,19 @@ class Ethernet {
     inline static bool has_received_imd_bypass{false};
     inline static bool has_received_sdc_enable{false};
 
-    inline static bool has_received_BCU_test_pwm{false};
-    inline static bool has_received_BCU_configure_commutation_parameters{false};
-    inline static bool has_received_BCU_stop{false};
-    inline static bool has_received_BCU_space_vector{false};
-    inline static bool has_received_BCU_fix_dc_link_voltage{false};
-    inline static bool has_received_BCU_unfix_dc_link_voltage{false};
-
     float charge_voltage{0.0f};
     ImdBypassState imd_bypass_state{ImdBypassState::DisableIMD};
     SdcEnableState sdc_enable_state{SdcEnableState::DisableSDC};
 
-    float requested_duty_cycle_u{0.0f};
-    float requested_duty_cycle_v{0.0f};
-    float requested_duty_cycle_w{0.0f};
-
-    uint32_t requested_commutation_frequency_hz{0};
-    uint32_t requested_dead_time_ns{0};
-
-    float requested_modulation_index{0.0f};
-    float requested_modulation_frequency_hz{0.0f};
-
-    float requested_dc_link_voltage{0.0f};
+    float *bus_voltage;
 
    private:
     ServerSocket control_station_tcp;
     DatagramSocket control_station_udp;
+    DatagramSocket bcu_udp;
 
     PinState *sdc_good;
-    float *bus_voltage;
+    float *supercaps_voltage;
     Actuators::Contactors::State *contactors_internal_state;
     float *total_supercaps_voltage;
     std::array<std::array<float *, 48>, 3> cells_voltage;
@@ -110,39 +95,7 @@ class Ethernet {
     HeapOrder sdc_enalbe{1694, on_sdc_enable, &sdc_enable_state};
     HeapOrder hold_supercaps{1693, on_hold_supercaps};
 
-    static void on_BCU_test_pwm() { has_received_BCU_test_pwm = true; }
-
-    static void on_BCU_configure_commutation_parameters() {
-        has_received_BCU_configure_commutation_parameters = true;
-    }
-
-    static void on_BCU_stop() { has_received_BCU_stop = true; }
-
-    static void on_BCU_space_vector() { has_received_BCU_space_vector = true; }
-
-    static void on_BCU_fix_dc_link_voltage() {
-        has_received_BCU_fix_dc_link_voltage = true;
-    }
-    static void on_BCU_unfix_dc_link_voltage() {
-        has_received_BCU_unfix_dc_link_voltage = true;
-    }
-
-    HeapOrder BCU_test_pwm{1799, on_BCU_test_pwm, &requested_duty_cycle_u,
-                           &requested_duty_cycle_v, &requested_duty_cycle_w};
-
-    HeapOrder BCU_configure_commutation_parameters{
-        1795, on_BCU_configure_commutation_parameters,
-        &requested_commutation_frequency_hz, &requested_dead_time_ns};
-
-    HeapOrder BCU_stop{1794, on_BCU_stop};
-
-    HeapOrder BCU_space_vector{1793, on_BCU_space_vector,
-                               &requested_modulation_index,
-                               &requested_modulation_frequency_hz};
-
-    HeapOrder BCU_fix_dc_link_voltage{1791, on_BCU_fix_dc_link_voltage,
-                                      &requested_dc_link_voltage};
-    HeapOrder BCU_unfix_dc_link_voltage{1790, on_BCU_unfix_dc_link_voltage};
+    HeapPacket bus_voltage_order{1692, bus_voltage};
 
     HeapPacket total_voltage{1600, total_supercaps_voltage};
 
@@ -322,25 +275,10 @@ class Ethernet {
 
     HeapPacket sdc_state{1607, sdc_good};
 
-    HeapPacket contactors_state{1608, bus_voltage, contactors_internal_state};
+    HeapPacket contactors_state{1608, supercaps_voltage,
+                                contactors_internal_state};
 
     HeapPacket current_sense{1609, output_current};
-
-    HeapPacket bcu_state_packet{1701, master_general_state, master_nested_state,
-                                slave_general_state, slave_nested_state};
-
-    HeapPacket bcu_control_parameters_packet{1700, duty_cycle_u, duty_cycle_v,
-                                             duty_cycle_w};
-
-    HeapPacket bcu_dc_link_voltage_packet{1702,
-                                          average_dc_link_voltage,
-                                          dc_link_voltage_1,
-                                          dc_link_voltage_2,
-                                          dc_link_voltage_3,
-                                          dc_link_voltage_4};
-
-    HeapPacket bcu_current_sense_packet{1703, average_current_u,
-                                        average_current_v, average_current_w};
 
    public:
     Ethernet(float *total_supercaps_voltage,
@@ -350,24 +288,14 @@ class Ethernet {
              std::array<float *, 3> min_cell_voltage,
              std::array<float *, 3> avg_cell_voltage,
              std::array<float *, 3> max_temp, std::array<float *, 3> min_temp,
-             PinState *sdc_good, float *bus_voltage,
+             PinState *sdc_good, float *bus_voltage, float *supercaps_voltage,
              Actuators::Contactors::State *contactors_internal_state,
-             float *output_current,
-             StateMachine::state_id *master_general_state,
-             StateMachine::state_id *master_nested_state,
-             StateMachine::state_id *slave_general_state,
-             StateMachine::state_id *slave_nested_state, float *duty_cycle_u,
-             float *duty_cycle_v, float *duty_cycle_w,
-             float *average_dc_link_voltage, float *dc_link_voltage_1,
-             float *dc_link_voltage_2, float *dc_link_voltage_3,
-             float *dc_link_voltage_4, double *average_current_u,
-             double *average_current_v, double *average_current_w);
+             float *output_current);
 
     void send_supercaps_data();
     void send_sdc_data();
     void send_contactors_data();
     void send_current_sense();
-    void send_bcu_data();
     bool is_connected();
 };
 

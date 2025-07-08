@@ -10,76 +10,10 @@ CAN::CAN()
       module_can(
           [&](CMS::Messages::CanPacket& packet) {
               static FDCAN::Packet last_packet{};
-              static uint16_t encoded_duty_cycle_u{0};
-              static uint16_t encoded_duty_cycle_v{0};
-              static uint16_t encoded_duty_cycle_w{0};
-              static uint8_t encoded_dc_link_voltage_1{0};
-              static uint8_t encoded_dc_link_voltage_2{0};
-              static uint8_t encoded_dc_link_voltage_3{0};
-              static uint8_t encoded_dc_link_voltage_4{0};
-              static uint16_t encoded_average_current_u{0};
-              static uint16_t encoded_average_current_v{0};
-              static uint16_t encoded_average_current_w{0};
 
               bool got_something = FDCAN::read(can_id, &last_packet);
 
               if (got_something) {
-                  switch (last_packet.identifier) {
-                      case state_id:
-                          memcpy(&master_general_state, &last_packet.rx_data[0],
-                                 sizeof(StateMachine::state_id));
-                          memcpy(&master_nested_state, &last_packet.rx_data[1],
-                                 sizeof(StateMachine::state_id));
-                          memcpy(&slave_general_state, &last_packet.rx_data[2],
-                                 sizeof(StateMachine::state_id));
-                          memcpy(&slave_nested_state, &last_packet.rx_data[3],
-                                 sizeof(StateMachine::state_id));
-                          break;
-                      case control_parameters_id:
-                          memcpy(&encoded_duty_cycle_u, &last_packet.rx_data[0],
-                                 sizeof(uint16_t));
-                          memcpy(&encoded_duty_cycle_v, &last_packet.rx_data[2],
-                                 sizeof(uint16_t));
-                          memcpy(&encoded_duty_cycle_w, &last_packet.rx_data[4],
-                                 sizeof(uint16_t));
-                          duty_cycle_u = (float)encoded_duty_cycle_u / 100.0f;
-                          duty_cycle_v = (float)encoded_duty_cycle_v / 100.0f;
-                          duty_cycle_w = (float)encoded_duty_cycle_w / 100.0f;
-                          break;
-                      case dc_link_id:
-                          memcpy(&average_dc_link_voltage,
-                                 &last_packet.rx_data[0], sizeof(float));
-                          memcpy(&encoded_dc_link_voltage_1,
-                                 &last_packet.rx_data[4], sizeof(uint8_t));
-                          memcpy(&encoded_dc_link_voltage_2,
-                                 &last_packet.rx_data[5], sizeof(uint8_t));
-                          memcpy(&encoded_dc_link_voltage_3,
-                                 &last_packet.rx_data[6], sizeof(uint8_t));
-                          memcpy(&encoded_dc_link_voltage_4,
-                                 &last_packet.rx_data[7], sizeof(uint8_t));
-                          dc_link_voltage_1 = (float)encoded_dc_link_voltage_1;
-                          dc_link_voltage_2 = (float)encoded_dc_link_voltage_2;
-                          dc_link_voltage_3 = (float)encoded_dc_link_voltage_3;
-                          dc_link_voltage_4 = (float)encoded_dc_link_voltage_4;
-                          break;
-                      case current_sense_id:
-                          memcpy(&encoded_average_current_u,
-                                 &last_packet.rx_data[0], sizeof(uint16_t));
-                          memcpy(&encoded_average_current_v,
-                                 &last_packet.rx_data[2], sizeof(uint16_t));
-                          memcpy(&encoded_average_current_w,
-                                 &last_packet.rx_data[4], sizeof(uint16_t));
-                          average_current_u =
-                              (double)encoded_average_current_u / 100.0;
-                          average_current_v =
-                              (double)encoded_average_current_v / 100.0;
-                          average_current_w =
-                              (double)encoded_average_current_w / 100.0;
-                          break;
-                      default:
-                          break;
-                  }
-
                   packet.id = last_packet.identifier;
                   packet.length = DLC_to_length(last_packet.data_length);
                   packet.payload = last_packet.rx_data;
@@ -116,63 +50,6 @@ void CAN::set_data_rate(CMS::Types::TxCycle_t tx_cycle) {
 }
 
 void CAN::update() { module_can.update(); }
-
-void CAN::transmit_start_test_pwm(float duty_cycle_u, float duty_cycle_v,
-                                  float duty_cycle_w) {
-    uint16_t encoded_duty_cycle_u = (uint16_t)(duty_cycle_u * 100.0f);
-    uint16_t encoded_duty_cycle_v = (uint16_t)(duty_cycle_v * 100.0f);
-    uint16_t encoded_duty_cycle_w = (uint16_t)(duty_cycle_w * 100.0f);
-
-    std::array<uint8_t, 6> payload{};
-    memcpy(payload.data(), &encoded_duty_cycle_u, sizeof(uint16_t));
-    memcpy(payload.data() + 2, &encoded_duty_cycle_v, sizeof(uint16_t));
-    memcpy(payload.data() + 4, &encoded_duty_cycle_w, sizeof(uint16_t));
-    FDCAN::transmit(can_id, start_test_pwm_id,
-                    reinterpret_cast<const char*>(payload.data()),
-                    length_to_DLC(payload.size()));
-}
-
-void CAN::transmit_configure_commutation_parameters(
-    uint32_t commutation_frequency_hz, uint32_t dead_time_ns) {
-    std::array<uint8_t, 8> payload{};
-    memcpy(payload.data(), &commutation_frequency_hz, sizeof(uint32_t));
-    memcpy(payload.data() + 4, &dead_time_ns, sizeof(uint32_t));
-    FDCAN::transmit(can_id, configure_commutation_parameters_id,
-                    reinterpret_cast<const char*>(payload.data()),
-                    length_to_DLC(payload.size()));
-}
-
-void CAN::transmit_stop() {
-    std::array<uint8_t, 0> payload{};
-    FDCAN::transmit(can_id, stop_control_id,
-                    reinterpret_cast<const char*>(payload.data()),
-                    FDCAN::DLC::BYTES_0);
-}
-
-void CAN::transmit_start_space_vector(float modulation_index,
-                                      float modulation_frequency_hz) {
-    std::array<uint8_t, 8> payload{};
-    memcpy(payload.data(), &modulation_index, sizeof(float));
-    memcpy(payload.data() + 4, &modulation_frequency_hz, sizeof(float));
-    FDCAN::transmit(can_id, start_space_vector_id,
-                    reinterpret_cast<const char*>(payload.data()),
-                    length_to_DLC(payload.size()));
-}
-
-void CAN::transmit_fix_dc_link_voltage(float voltage) {
-    std::array<uint8_t, 4> payload{};
-    memcpy(payload.data(), &voltage, sizeof(float));
-    FDCAN::transmit(can_id, fix_dc_link_voltage_id,
-                    reinterpret_cast<const char*>(payload.data()),
-                    length_to_DLC(payload.size()));
-}
-
-void CAN::transmit_unfix_dc_link_voltage() {
-    std::array<uint8_t, 0> payload{};
-    FDCAN::transmit(can_id, unfix_dc_link_voltage_id,
-                    reinterpret_cast<const char*>(payload.data()),
-                    FDCAN::DLC::BYTES_0);
-}
 
 inline constexpr uint8_t CAN::DLC_to_length(const ::FDCAN::DLC dlc) noexcept {
     switch (dlc) {

@@ -10,7 +10,7 @@ Board::Board()
                  Pinout::contactor_inverter_discharge_pin,
                  Pinout::contactor_ess_charge_pin, Pinout::contactor_low_pin,
                  Pinout::contactor_high_pin, Pinout::contactor_precharge_pin,
-                 bus_voltage.get_voltage(), ess_voltage),
+                 bus_voltage_value, ess_voltage),
 
       leds(Pinout::led_operational_pin, Pinout::led_fault_pin,
            Pinout::led_can_pin, Pinout::led_flash_pin, Pinout::led_sleep_pin,
@@ -20,24 +20,17 @@ Board::Board()
       can(),
       stlib(HVSCU::Communication::Ethernet::local_ip.string_address,
             "255.255.0.0", "192.168.2.1"),
-      ethernet(&can.module_can.system.total_voltage_volts,
-               can.module_can.system.all_cells_voltage[0],
-               can.module_can.system.all_module_voltage[0],
-               can.module_can.system.all_max_cell_voltage[0],
-               can.module_can.system.all_min_cell_voltage[0],
-               can.module_can.system.all_avg_cell_voltage[0],
-               can.module_can.system.all_max_temperature[0],
-               can.module_can.system.all_min_temperature[0],
-               sdc.get_sdc_state(), bus_voltage.get_voltage_pointer(),
-               contactors.get_state_pointer(),
-               current_sense.get_value_pointer(), &can.master_general_state,
-               &can.master_nested_state, &can.slave_general_state,
-               &can.slave_nested_state, &can.duty_cycle_u, &can.duty_cycle_v,
-               &can.duty_cycle_w, &can.average_dc_link_voltage,
-               &can.dc_link_voltage_1, &can.dc_link_voltage_2,
-               &can.dc_link_voltage_3, &can.dc_link_voltage_4,
-               &can.average_current_u, &can.average_current_v,
-               &can.average_current_w) {
+      ethernet(
+          &can.module_can.system.total_voltage_volts,
+          can.module_can.system.all_cells_voltage[0],
+          can.module_can.system.all_module_voltage[0],
+          can.module_can.system.all_max_cell_voltage[0],
+          can.module_can.system.all_min_cell_voltage[0],
+          can.module_can.system.all_avg_cell_voltage[0],
+          can.module_can.system.all_max_temperature[0],
+          can.module_can.system.all_min_temperature[0], sdc.get_sdc_state(),
+          &bus_voltage_value, bus_voltage.get_voltage_pointer(),
+          contactors.get_state_pointer(), current_sense.get_value_pointer()) {
     initialize_state_machine();
 
     can.start();
@@ -169,48 +162,6 @@ void Board::update_operational() {
         }
 
         ethernet.has_received_sdc_enable = false;
-    }
-
-    if (ethernet.has_received_BCU_test_pwm) {
-        can.transmit_start_test_pwm(ethernet.requested_duty_cycle_u,
-                                    ethernet.requested_duty_cycle_v,
-                                    ethernet.requested_duty_cycle_w);
-
-        ethernet.has_received_BCU_test_pwm = false;
-    }
-
-    if (ethernet.has_received_BCU_configure_commutation_parameters) {
-        can.transmit_configure_commutation_parameters(
-            ethernet.requested_commutation_frequency_hz,
-            ethernet.requested_dead_time_ns);
-
-        ethernet.has_received_BCU_configure_commutation_parameters = false;
-    }
-
-    if (ethernet.has_received_BCU_stop) {
-        can.transmit_stop();
-
-        ethernet.has_received_BCU_stop = false;
-    }
-
-    if (ethernet.has_received_BCU_space_vector) {
-        can.transmit_start_space_vector(
-            ethernet.requested_modulation_index,
-            ethernet.requested_modulation_frequency_hz);
-
-        ethernet.has_received_BCU_space_vector = false;
-    }
-
-    if (ethernet.has_received_BCU_fix_dc_link_voltage) {
-        can.transmit_fix_dc_link_voltage(ethernet.requested_dc_link_voltage);
-
-        ethernet.has_received_BCU_fix_dc_link_voltage = false;
-    }
-
-    if (ethernet.has_received_BCU_unfix_dc_link_voltage) {
-        can.transmit_unfix_dc_link_voltage();
-
-        ethernet.has_received_BCU_unfix_dc_link_voltage = false;
     }
 }
 
