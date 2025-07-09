@@ -33,6 +33,7 @@ Board::Board()
           contactors.get_state_pointer(), current_sense.get_value_pointer()) {
     populate_state_machine();
     leds.signal_connecting();
+    initialize_protections();
 
     can.start();
 
