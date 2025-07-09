@@ -5,7 +5,7 @@
 namespace HVSCU::Pinout {
 
 extern Pin& output_current_measurement_pin;
-extern Pin& bus_voltage_measurement_pin;
+extern Pin& supercaps_voltage_measurement_pin;
 
 extern Pin& high_voltage_power_supply_enable_pin;
 

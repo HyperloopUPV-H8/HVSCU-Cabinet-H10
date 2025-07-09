@@ -33,13 +33,13 @@ Contactors::Contactors(Pin &ess_discharge_pin, Pin &discharge_pin,
       contactors_state(State::Open),
       bus_voltage(bus_voltage),
       ess_voltage(ess_voltage) {
-    // States
+    // CONTACTORS STATE MACHINE
     contactors_state.add_state(State::Charging);
     contactors_state.add_state(State::Charged);
     contactors_state.add_state(State::Precharge);
     contactors_state.add_state(State::Close);
 
-    // Transitions
+    //     TRANSITIONS
     contactors_state.add_transition(State::Open, State::Charging, [&]() {
         return charge_request_received && (ess_voltage < charge_voltage);
     });
@@ -75,7 +75,7 @@ Contactors::Contactors(Pin &ess_discharge_pin, Pin &discharge_pin,
     contactors_state.add_transition(State::Close, State::Charged,
                                     [&]() { return hold_request_received; });
 
-    // Actions
+    //     ENTER ACTIONS
     contactors_state.add_enter_action(
         [&]() {
             close_discharge_circuit();
@@ -100,10 +100,6 @@ Contactors::Contactors(Pin &ess_discharge_pin, Pin &discharge_pin,
     contactors_state.add_enter_action([&]() { close_precharge_circuit(); },
                                       State::Precharge);
 
-    contactors_state.add_low_precision_cyclic_action(
-        [&]() { timeout_expired = true; }, std::chrono::milliseconds(5000),
-        State::Precharge);
-
     contactors_state.add_enter_action(
         [&]() {
             close_high_voltage_circuit();
@@ -114,7 +110,12 @@ Contactors::Contactors(Pin &ess_discharge_pin, Pin &discharge_pin,
         },
         State::Close);
 
-    state_check_alarm_id = Time::register_low_precision_alarm(
+    //     CYCLIC ACTIONS
+    contactors_state.add_low_precision_cyclic_action(
+        [&]() { timeout_expired = true; }, std::chrono::milliseconds(5000),
+        State::Precharge);
+
+        state_check_alarm_id = Time::register_low_precision_alarm(
         CHECK_PERIOD_MS, [this]() { contactors_state.check_transitions(); });
 
     contactors_state.force_change_state(State::Open);

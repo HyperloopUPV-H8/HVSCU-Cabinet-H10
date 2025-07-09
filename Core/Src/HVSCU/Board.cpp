@@ -4,7 +4,7 @@ namespace HVSCU {
 
 Board::Board()
     : imd(Pinout::imd_power_pin, Pinout::imd_measurement_high_side_pin),
-      bus_voltage(Pinout::bus_voltage_measurement_pin),
+      supercaps_voltage(Pinout::supercaps_voltage_measurement_pin),
       current_sense(Pinout::output_current_measurement_pin),
       contactors(Pinout::contactor_ess_discharge_pin,
                  Pinout::contactor_inverter_discharge_pin,
@@ -29,72 +29,64 @@ Board::Board()
           can.module_can.system.all_avg_cell_voltage[0],
           can.module_can.system.all_max_temperature[0],
           can.module_can.system.all_min_temperature[0], sdc.get_sdc_state(),
-          &bus_voltage_value, bus_voltage.get_voltage_pointer(),
+          &bus_voltage_value, supercaps_voltage.get_voltage_pointer(),
           contactors.get_state_pointer(), current_sense.get_value_pointer()) {
-    initialize_state_machine();
+    populate_state_machine();
+    leds.signal_connecting();
 
     can.start();
 
-    Time::register_low_precision_alarm(100, [&]() {
-        ethernet.send_supercaps_data();
-        ethernet.send_sdc_data();
-        ethernet.send_contactors_data();
-    });
+    Time::register_low_precision_alarm(100,
+                                       [&]() { send_ethernet_10hz = true; });
 
     Time::register_low_precision_alarm(1, [&]() { send_ethernet_1khz = true; });
 
-    Time::register_low_precision_alarm(100, [&]() {
-        sdc.read_state();
-        bus_voltage.read();
-        ess_voltage = can.module_can.system.total_voltage_volts;
-    });
+    Time::register_low_precision_alarm(100,
+                                       [&]() { read_sensors_10hz = true; });
 
-    Time::register_low_precision_alarm(1, [&]() { current_sense.read(); });
-}
-
-void Board::initialize_state_machine() {
-    general_state_machine = StateMachine{States::Connecting};
-    general_state_machine.add_state(States::Operational);
-    general_state_machine.add_state(States::Fault);
-
-    // Transitions
-    ProtectionManager::link_state_machine(general_state_machine, States::Fault);
-
-    general_state_machine.add_transition(
-        States::Connecting, States::Operational,
-        [this]() { return ethernet.is_connected(); });
-
-    // Enter Actions
-    // State LEDs
-    general_state_machine.add_enter_action(
-        [this]() { leds.signal_connecting(); }, States::Connecting);
-
-    general_state_machine.add_enter_action(
-        [this]() { leds.signal_operational(); }, States::Operational);
-
-    general_state_machine.add_enter_action([this]() { leds.signal_fault(); },
-                                           States::Fault);
-
-    // Contactors
-    general_state_machine.add_enter_action([this]() { contactors.open(); },
-                                           States::Fault);
-
-    // Ensures the enter action of the initial state runs
-    general_state_machine.force_change_state(States::Connecting);
+    Time::register_low_precision_alarm(1, [&]() { read_sensors_1khz = true; });
 }
 
 void Board::update() {
     general_state_machine.check_transitions();
     switch (general_state_machine.current_state) {
-        case States::Connecting:
+        case States::CONNECTING:
             update_connecting();
             break;
-        case States::Operational:
+        case States::OPERATIONAL:
             update_operational();
             break;
-        case States::Fault:
+        case States::FAULT:
             update_fault();
             break;
+    }
+
+    if (send_ethernet_1khz) {
+        ethernet.send_current_sense();
+
+        send_ethernet_1khz = false;
+    }
+
+    if (send_ethernet_10hz) {
+        ethernet.send_supercaps_data();
+        ethernet.send_sdc_data();
+        ethernet.send_contactors_data();
+
+        send_ethernet_10hz = false;
+    }
+
+    if (read_sensors_10hz) {
+        sdc.read_state();
+        supercaps_voltage.read();
+        ess_voltage = can.module_can.system.total_voltage_volts;
+
+        read_sensors_10hz = false;
+    }
+
+    if (read_sensors_1khz) {
+        current_sense.read();
+
+        read_sensors_1khz = false;
     }
 
     can.update();
@@ -105,12 +97,6 @@ void Board::update() {
 void Board::update_connecting() {}
 
 void Board::update_operational() {
-    if (send_ethernet_1khz) {
-        ethernet.send_current_sense();
-
-        send_ethernet_1khz = false;
-    }
-
     if (ethernet.has_received_open_contactors) {
         contactors.open();
 
@@ -132,7 +118,6 @@ void Board::update_operational() {
     } else if (ethernet.has_received_close_contactors) {
         contactors.close();
 
-        ethernet.has_received_charge_supercaps = false;
         ethernet.has_received_close_contactors = false;
     }
 
@@ -166,4 +151,34 @@ void Board::update_operational() {
 }
 
 void Board::update_fault() {}
+
+void Board::populate_state_machine() {
+    // GENERAL STATE MACHINE
+    general_state_machine.add_state(States::OPERATIONAL);
+    general_state_machine.add_state(States::FAULT);
+
+    //     TRANSITIONS
+    general_state_machine.add_transition(
+        States::CONNECTING, States::OPERATIONAL,
+        [this]() { return ethernet.is_connected(); });
+
+    //     ENTER ACTIONS
+    general_state_machine.add_enter_action(
+        [this]() { leds.signal_connecting(); }, States::CONNECTING);
+
+    general_state_machine.add_enter_action(
+        [this]() { leds.signal_operational(); }, States::OPERATIONAL);
+
+    general_state_machine.add_enter_action(
+        [this]() {
+            contactors.open();
+            leds.signal_fault();
+        },
+        States::FAULT);
+
+    general_state_machine.add_enter_action([this]() {}, States::FAULT);
+}
+
+void Board::initialize_protections() {}
+
 };  // namespace HVSCU

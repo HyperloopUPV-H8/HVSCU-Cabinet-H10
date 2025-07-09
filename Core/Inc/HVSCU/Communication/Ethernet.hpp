@@ -42,6 +42,7 @@ class Ethernet {
 
    private:
     ServerSocket control_station_tcp;
+
     DatagramSocket control_station_udp;
     DatagramSocket bcu_udp;
 

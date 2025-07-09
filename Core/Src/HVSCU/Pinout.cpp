@@ -30,7 +30,7 @@
 namespace HVSCU::Pinout {
 
 Pin& output_current_measurement_pin{AI_BATTERY_CURRENT_FW};
-Pin& bus_voltage_measurement_pin{HV_3V3};
+Pin& supercaps_voltage_measurement_pin{HV_3V3};
 
 Pin& high_voltage_power_supply_enable_pin{HV_PSU};
 
