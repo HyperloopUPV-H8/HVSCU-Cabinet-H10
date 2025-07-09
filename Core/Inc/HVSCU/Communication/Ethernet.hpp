@@ -24,14 +24,15 @@ class Ethernet {
     inline static const uint16_t tcp_server_port{50500};
     inline static const uint16_t tcp_client_port{50401};
     inline static const uint16_t udp_port{50400};
+    inline static const uint16_t bcu_udp_port{50402};
 
-    inline static bool has_received_close_contactors{false};
-    inline static bool has_received_open_contactors{false};
-    inline static bool has_received_hold_supercaps{false};
-    inline static bool has_received_charge_supercaps{false};
-    inline static bool has_received_reset_supercaps{false};
-    inline static bool has_received_imd_bypass{false};
-    inline static bool has_received_sdc_enable{false};
+    inline static volatile bool has_received_close_contactors{false};
+    inline static volatile bool has_received_open_contactors{false};
+    inline static volatile bool has_received_hold_supercaps{false};
+    inline static volatile bool has_received_charge_supercaps{false};
+    inline static volatile bool has_received_reset_supercaps{false};
+    inline static volatile bool has_received_imd_bypass{false};
+    inline static volatile bool has_received_sdc_enable{false};
 
     float charge_voltage{0.0f};
     ImdBypassState imd_bypass_state{ImdBypassState::DisableIMD};
