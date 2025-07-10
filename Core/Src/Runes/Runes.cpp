@@ -59,7 +59,7 @@ FDCAN::Instance FDCAN::instance1 = {.TX = PD1,
                                     .RX = PD0,
                                     .hfdcan = &hfdcan1,
                                     .instance = FDCAN1,
-                                    .dlc = DLC::BYTES_8,
+                                    .dlc = DLC::BYTES_64,
                                     .rx_location = FDCAN_RX_FIFO0,
                                     .fdcan_number = 1};
 
@@ -163,7 +163,7 @@ TimerPeripheral timer12(&htim12, {ADVANCED}, "TIM 12");
 TimerPeripheral timer16(&htim16, {BASE}, "TIM 16");
 TimerPeripheral timer17(&htim17, {BASE}, "TIM 17");
 TimerPeripheral timer15(&htim15, {ADVANCED}, "TIM 15");
-TimerPeripheral timer23(&htim23, {BASE, 275, UINT32_MAX - 1}, "TIM 23");
+TimerPeripheral timer23(&htim23, {ADVANCED, 275, UINT32_MAX - 1}, "TIM 23");
 
 vector<reference_wrapper<TimerPeripheral>> TimerPeripheral::timers = {
     timer1,  timer2,  timer3,  timer4, timer12,
@@ -214,7 +214,9 @@ DualPWMmap TimerPeripheral::available_dual_pwms = {
 #ifdef HAL_TIM_MODULE_ENABLED
 
 map<Pin, InputCapture::Instance> InputCapture::available_instances = {
-    {PF0, InputCapture::Instance(PF0, &timer23, TIM_CHANNEL_1, TIM_CHANNEL_2)}};
+    // {PF0, InputCapture::Instance(PF0, &timer23, TIM_CHANNEL_1,
+    // TIM_CHANNEL_2)},
+    {PF7, InputCapture::Instance(PF7, &timer23, TIM_CHANNEL_2, TIM_CHANNEL_1)}};
 
 #endif
 
@@ -282,7 +284,9 @@ uint32_t ADC::ranks[16] = {
 #ifdef HAL_EXTI_MODULE_ENABLED
 
 map<uint16_t, ExternalInterrupt::Instance> ExternalInterrupt::instances = {
-    {PE0.gpio_pin, Instance(EXTI0_IRQn)}, {PE1.gpio_pin, Instance(EXTI1_IRQn)}};
+    {PE0.gpio_pin, Instance(EXTI0_IRQn)},
+    {PE1.gpio_pin, Instance(EXTI1_IRQn)},
+    {PB12.gpio_pin, Instance(EXTI15_10_IRQn)}};
 
 #endif
 

@@ -18,7 +18,8 @@ Board::Board()
       sdc(Pinout::imd_bypass_pin, Pinout::sdc_control_pin,
           Pinout::sdc_good_pin),
       can(),
-      stlib(HVSCU::Communication::Ethernet::local_ip.string_address,
+      stlib("00:80:e1:00:02:16",
+            HVSCU::Communication::Ethernet::local_ip.string_address,
             "255.255.0.0", "192.168.2.1"),
       ethernet(
           &can.module_can.system.total_voltage_volts,
@@ -37,19 +38,21 @@ Board::Board()
 
     can.start();
 
-    Time::register_low_precision_alarm(100,
-                                       [&]() { send_ethernet_10hz = true; });
+    Time::register_low_precision_alarm(100, [&]() {
+        send_ethernet_10hz = true;
+        read_sensors_10hz = true;
+    });
 
-    Time::register_low_precision_alarm(1, [&]() { send_ethernet_1khz = true; });
+    Time::register_low_precision_alarm(1, [&]() {
+        send_ethernet_1khz = true;
+        read_sensors_1khz = true;
+    });
 
-    Time::register_low_precision_alarm(100,
-                                       [&]() { read_sensors_10hz = true; });
-
-    Time::register_low_precision_alarm(1, [&]() { read_sensors_1khz = true; });
+    Time::register_low_precision_alarm(
+        1, [&]() { protection_manager.update_low_frequency(); });
 }
 
 void Board::update() {
-    general_state_machine.check_transitions();
     switch (general_state_machine.current_state) {
         case States::CONNECTING:
             update_connecting();
@@ -92,6 +95,8 @@ void Board::update() {
 
     can.update();
     imd.update();
+    protection_manager.update_high_frequency();
+    general_state_machine.check_transitions();
     stlib.update();
 }
 
