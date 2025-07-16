@@ -42,6 +42,8 @@ struct STLIBHandle {
 };
 
 class Board {
+    constexpr static float MAX_ESS_VOLTAGE{432.0f};
+
     enum States : uint8_t { CONNECTING = 0, OPERATIONAL, FAULT };
 
     StateMachine general_state_machine{States::CONNECTING};
@@ -55,6 +57,7 @@ class Board {
 
     float ess_voltage{0.0f};
     float bus_voltage_value{0.0f};
+    float state_of_charge{0.0f};
 
     Actuators::Contactors contactors;
     Actuators::LEDs leds;
@@ -77,6 +80,7 @@ class Board {
     volatile bool send_ethernet_10hz{false};
     volatile bool read_sensors_10hz{false};
     volatile bool read_sensors_1khz{false};
+    bool imd_fault{false};
 
    public:
     Board();

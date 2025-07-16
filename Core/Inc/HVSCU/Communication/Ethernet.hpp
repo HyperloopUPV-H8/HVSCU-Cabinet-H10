@@ -1,6 +1,7 @@
 #pragma once
 
 #include "HVSCU/Actuators/Contactors.hpp"
+#include "HVSCU/Sensors/IMD.hpp"
 #include "ST-LIB.hpp"
 
 namespace HVSCU::Communication {
@@ -48,6 +49,7 @@ class Ethernet {
 
     PinState *sdc_good;
     float *supercaps_voltage;
+    float *state_of_charge;
     Actuators::Contactors::State *contactors_internal_state;
     float *total_supercaps_voltage;
     std::array<std::array<float *, 48>, 3> cells_voltage;
@@ -58,22 +60,9 @@ class Ethernet {
     std::array<float *, 3> max_temp;
     std::array<float *, 3> min_temp;
     float *output_current;
-
-    StateMachine::state_id *master_general_state;
-    StateMachine::state_id *master_nested_state;
-    StateMachine::state_id *slave_general_state;
-    StateMachine::state_id *slave_nested_state;
-    float *duty_cycle_u;
-    float *duty_cycle_v;
-    float *duty_cycle_w;
-    float *average_dc_link_voltage;
-    float *dc_link_voltage_1;
-    float *dc_link_voltage_2;
-    float *dc_link_voltage_3;
-    float *dc_link_voltage_4;
-    double *average_current_u;
-    double *average_current_v;
-    double *average_current_w;
+    Sensors::IMD::State *imd_state;
+    float *isolation_resistance;
+    PinState *imd_ok;
 
     static void on_close_contactors() { has_received_close_contactors = true; }
 
@@ -99,7 +88,7 @@ class Ethernet {
 
     HeapPacket bus_voltage_order{1692, bus_voltage};
 
-    HeapPacket total_voltage{1600, total_supercaps_voltage};
+    HeapPacket total_voltage{1600, total_supercaps_voltage, state_of_charge};
 
     HeapPacket module_1_summary{1601,
                                 module_voltage[0],
@@ -281,9 +270,10 @@ class Ethernet {
                                 contactors_internal_state};
 
     HeapPacket current_sense{1609, output_current};
+    HeapPacket imd_data{1610, imd_state, isolation_resistance, imd_ok};
 
    public:
-    Ethernet(float *total_supercaps_voltage,
+    Ethernet(float *total_supercaps_voltage, float *state_of_charge,
              std::array<std::array<float *, 48>, 3> cells_voltage,
              std::array<float *, 3> module_voltage,
              std::array<float *, 3> max_cell_voltage,
@@ -292,7 +282,8 @@ class Ethernet {
              std::array<float *, 3> max_temp, std::array<float *, 3> min_temp,
              PinState *sdc_good, float *bus_voltage, float *supercaps_voltage,
              Actuators::Contactors::State *contactors_internal_state,
-             float *output_current);
+             float *output_current, Sensors::IMD::State *imd_state,
+             float *isolation_resistance, PinState *imd_ok);
 
     void send_supercaps_data();
     void send_sdc_data();

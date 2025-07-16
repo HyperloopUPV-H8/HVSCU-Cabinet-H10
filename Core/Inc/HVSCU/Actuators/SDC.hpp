@@ -11,6 +11,8 @@ class SDC {
     PinState sdc_good{PinState::OFF};
     DigitalSensor sdc_state;
 
+    bool sdc_good_bool{true};
+
    public:
     SDC(Pin& imd_bypass_pin, Pin& sdc_enable_pin, Pin& sdc_state_pin);
 
@@ -22,6 +24,7 @@ class SDC {
 
     void read_state();
     PinState* get_sdc_state();
+    bool* get_sdc_state_bool();
 };
 
 };  // namespace HVSCU::Actuators

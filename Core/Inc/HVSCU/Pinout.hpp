@@ -14,7 +14,7 @@ extern Pin& sdc_good_pin;
 
 extern Pin& imd_power_pin;
 extern Pin& imd_bypass_pin;
-extern Pin& imd_measurement_high_side_pin;
+extern Pin& imd_ok_pin;
 extern Pin& imd_measurement_low_side_pin;
 
 extern Pin& contactor_high_pin;

@@ -4,6 +4,10 @@
 CMS::Data::System<NUMBER_OF_STRINGS, NUMBER_OF_MODULES>
     CMS::Communications::ModuleCAN::system{};
 
+uint64_t CMS::Communications::get_ns_since_start() {
+    return Time::get_global_tick();
+}
+
 DMA_HandleTypeDef hdma_adc1;
 DMA_HandleTypeDef hdma_adc2;
 DMA_HandleTypeDef hdma_adc3;
@@ -87,7 +91,7 @@ SPI::Instance SPI::instance3 = {
     .instance = SPI3,
     .hdma_tx = DMA::Stream::DMA1Stream5,
     .hdma_rx = DMA::Stream::DMA1Stream6,
-    .baud_rate_prescaler = SPI_BAUDRATEPRESCALER_256,
+    .baud_rate_prescaler = SPI_BAUDRATEPRESCALER_128,
     .mode = SPI_MODE_MASTER,
     .use_DMA = false};
 

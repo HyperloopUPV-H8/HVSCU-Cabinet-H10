@@ -2,7 +2,7 @@
 
 namespace HVSCU::Communication {
 
-Ethernet::Ethernet(float *total_supercaps_voltage,
+Ethernet::Ethernet(float *total_supercaps_voltage, float *state_of_charge,
                    std::array<std::array<float *, 48>, 3> cells_voltage,
                    std::array<float *, 3> module_voltage,
                    std::array<float *, 3> max_cell_voltage,
@@ -12,13 +12,15 @@ Ethernet::Ethernet(float *total_supercaps_voltage,
                    std::array<float *, 3> min_temp, PinState *sdc_good,
                    float *bus_voltage, float *supercaps_voltage,
                    Actuators::Contactors::State *contactors_internal_state,
-                   float *output_current)
+                   float *output_current, Sensors::IMD::State *imd_state,
+                   float *isolation_resistance, PinState *imd_ok)
     : bus_voltage(bus_voltage),
       control_station_tcp(local_ip, tcp_server_port),
       control_station_udp(local_ip, udp_port, control_station_ip, udp_port),
       bcu_udp(local_ip, bcu_udp_port, bcu_ip, bcu_udp_port),
       sdc_good(sdc_good),
       supercaps_voltage(supercaps_voltage),
+      state_of_charge(state_of_charge),
       contactors_internal_state(contactors_internal_state),
       total_supercaps_voltage(total_supercaps_voltage),
       cells_voltage(cells_voltage),
@@ -28,7 +30,10 @@ Ethernet::Ethernet(float *total_supercaps_voltage,
       avg_cell_voltage(avg_cell_voltage),
       max_temp(max_temp),
       min_temp(min_temp),
-      output_current(output_current) {}
+      output_current(output_current),
+      imd_state(imd_state),
+      isolation_resistance(isolation_resistance),
+      imd_ok(imd_ok) {}
 
 void Ethernet::send_supercaps_data() {
     control_station_udp.send_packet(total_voltage);
