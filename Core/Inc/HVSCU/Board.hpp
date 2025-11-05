@@ -31,9 +31,9 @@ struct ProtectionManagerHandle {
 
 // Turn the STLIB into a class
 struct STLIBHandle {
-    STLIBHandle(string mac = "00:80:e1:00:00:00", string ip = "192.168.1.4",
+    STLIBHandle(string mac = "00:80:e1:00:00:00", string ip = "192.168.2.16",
                 string subnet_mask = "255.255.0.0",
-                string gateway = "192.168.1.1",
+                string gateway = "192.168.2.1",
                 UART::Peripheral& printf_peripheral = UART::uart2) {
         STLIB::start(mac, ip, subnet_mask, gateway, printf_peripheral);
     }

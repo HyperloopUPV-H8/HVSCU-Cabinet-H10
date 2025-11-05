@@ -20,7 +20,7 @@ Board::Board()
       can(),
       stlib("00:80:e1:00:02:16",
             HVSCU::Communication::Ethernet::local_ip.string_address,
-            "255.255.255.0", "192.168.2.1"),
+            "255.255.0.0", "192.168.2.1"),
       ethernet(
           &can.module_can.system.total_voltage_volts, &state_of_charge,
           can.module_can.system.all_cells_voltage[0],
@@ -53,8 +53,8 @@ Board::Board()
         read_sensors_1khz = true;
     });
 
-    Time::register_low_precision_alarm(
-        1, [&]() { protection_manager.update_low_frequency(); });
+    // Time::register_low_precision_alarm(
+    //     1, [&]() { protection_manager.update_low_frequency(); });
 }
 
 void Board::update() {
@@ -90,29 +90,29 @@ void Board::update() {
         ess_voltage = can.module_can.system.total_voltage_volts;
         state_of_charge = ess_voltage * 100.0f / MAX_ESS_VOLTAGE;
         for (uint8_t i = 0; i < 3; i++) {
-            if (*can.module_can.system.all_module_voltage[0][i] >= 148.8f) {
-                ProtectionManager::fault_and_propagate();
-                break;
-            }
+            // if (*can.module_can.system.all_module_voltage[0][i] >= 148.8f) {
+            //     ProtectionManager::fault_and_propagate();
+            //     break;
+            // }
 
-            if (*can.module_can.system.all_max_temperature[0][i] >= 60.0) {
-                ProtectionManager::fault_and_propagate();
-                break;
-            }
+            // if (*can.module_can.system.all_max_temperature[0][i] >= 60.0) {
+            //     ProtectionManager::fault_and_propagate();
+            //     break;
+            // }
 
-            if (*can.module_can.system.all_min_temperature[0][i] <= 5.5) {
-                ProtectionManager::fault_and_propagate();
-                break;
-            }
+            // if (*can.module_can.system.all_min_temperature[0][i] <= 5.5) {
+            //     ProtectionManager::fault_and_propagate();
+            //     break;
+            // }
 
             bool protection_triggered = false;
-            for (uint8_t j = 0; j < 48; j++) {
-                if (*can.module_can.system.all_cells_voltage[0][i][j] >= 3.1f) {
-                    ProtectionManager::fault_and_propagate();
-                    protection_triggered = true;
-                    break;
-                }
-            }
+            // for (uint8_t j = 0; j < 48; j++) {
+            //     if (*can.module_can.system.all_cells_voltage[0][i][j] >= 3.1f) {
+            //         ProtectionManager::fault_and_propagate();
+            //         protection_triggered = true;
+            //         break;
+            //     }
+            // }
             if (protection_triggered) break;
         }
 
@@ -130,7 +130,9 @@ void Board::update() {
     imd_fault = imd.ever_got_ok && *imd.get_ok_state() == PinState::OFF;
     protection_manager.update_high_frequency();
     general_state_machine.check_transitions();
+    [[maybe_unused]] Actuators::Contactors::State pruebas = *(contactors.get_state_pointer());
     stlib.update();
+
 }
 
 void Board::update_connecting() {}

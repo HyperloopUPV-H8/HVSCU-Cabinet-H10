@@ -85,7 +85,8 @@ Contactors::Contactors(Pin &ess_discharge_pin, Pin &discharge_pin,
         },
         State::Open);
 
-    contactors_state.add_enter_action([&]() { close_charging_circuit(); },
+    contactors_state.add_enter_action([&]() { 
+        close_charging_circuit(); },
                                       State::Charging);
 
     contactors_state.add_enter_action(
@@ -177,9 +178,9 @@ void Contactors::close_high_voltage_circuit() {
 }
 
 void Contactors::charge(float target_voltage) {
-    if (get_state() != State::Open && get_state() != State::Charged &&
-        get_state() != State::Charging)
-        return;
+    // if (get_state() != State::Open && get_state() != State::Charged &&
+    //     get_state() != State::Charging)
+    //     return;
 
     charge_voltage = target_voltage;
     charge_request_received = true;
