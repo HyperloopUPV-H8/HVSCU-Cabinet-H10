@@ -38,6 +38,7 @@ Contactors::Contactors(Pin &ess_discharge_pin, Pin &discharge_pin,
     contactors_state.add_state(State::Charged);
     contactors_state.add_state(State::Precharge);
     contactors_state.add_state(State::Close);
+    contactors_state.add_state(State::Fault);
 
     //     TRANSITIONS
     contactors_state.add_transition(State::Open, State::Charging, [&]() {
@@ -57,12 +58,11 @@ Contactors::Contactors(Pin &ess_discharge_pin, Pin &discharge_pin,
     });
 
     contactors_state.add_transition(State::Charged, State::Precharge, [&]() {
-        return (bus_voltage < ess_voltage - SAFE_VOLTAGE_DIFF);
+        return close_request_received && (bus_voltage < ess_voltage - SAFE_VOLTAGE_DIFF);
     });
 
-    contactors_state.add_transition(State::Charged, State::Close, [&]() {
-        return close_request_received &&
-               (bus_voltage >= ess_voltage - SAFE_VOLTAGE_DIFF);
+    contactors_state.add_transition(State::Precharge, State::Close, [&]() {
+        return (bus_voltage >= ess_voltage - SAFE_VOLTAGE_DIFF);
     });
 
     contactors_state.add_transition(State::Precharge, State::Charged,
@@ -110,6 +110,15 @@ Contactors::Contactors(Pin &ess_discharge_pin, Pin &discharge_pin,
             timeout_expired = false;
         },
         State::Close);
+    
+    contactors_state.add_enter_action(
+        [&]() {
+            close_charged_circuit();
+            hold_request_received = false;
+            charge_request_received = false;
+            close_request_received = false;
+        },
+        State::Fault);
 
     //     CYCLIC ACTIONS
     contactors_state.add_low_precision_cyclic_action(
@@ -136,6 +145,7 @@ void Contactors::close_discharge_circuit() {
     high_side.open();
     precharge.open();
 }
+
 
 void Contactors::close_charging_circuit() {
     ess_discharge.open();
@@ -190,6 +200,10 @@ void Contactors::close() {
     if (get_state() != State::Charged) return;
 
     close_request_received = true;
+}
+
+void Contactors::fault() {
+    contactors_state.force_change_state(State::Fault);
 }
 
 void Contactors::hold_charge() {

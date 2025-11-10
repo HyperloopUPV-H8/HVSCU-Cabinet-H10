@@ -11,11 +11,12 @@ class Contactors {
         Charging = 1,
         Charged = 2,
         Precharge = 3,
-        Close = 4
+        Close = 4,
+        Fault = 5,
     };
 
    private:
-    constexpr static float SAFE_VOLTAGE_DIFF{40.0f};
+    constexpr static float SAFE_VOLTAGE_DIFF{20.0f};
     constexpr static uint32_t CHECK_PERIOD_MS{100};
 
     class NormallyOpenContactor {
@@ -65,6 +66,7 @@ class Contactors {
     void close_charged_circuit();
     void close_precharge_circuit();
     void close_high_voltage_circuit();
+    void fault_circuit();
 
    public:
     Contactors(Pin &ess_discharge_pin, Pin &discharge_pin, Pin &ess_charge_pin,
@@ -75,6 +77,7 @@ class Contactors {
     void close();
 
     void open();
+    void fault();
     void hold_charge();
 
     const StateMachine::state_id &get_state() const;

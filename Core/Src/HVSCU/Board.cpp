@@ -213,7 +213,7 @@ void Board::populate_state_machine() {
 
     general_state_machine.add_enter_action(
         [this]() {
-            contactors.open();
+            contactors.fault();
             sdc.disable_sdc();
             leds.signal_fault();
         },
