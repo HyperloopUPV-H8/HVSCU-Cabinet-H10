@@ -38,7 +38,9 @@ Contactors::Contactors(Pin &ess_discharge_pin, Pin &discharge_pin,
     contactors_state.add_state(State::Charged);
     contactors_state.add_state(State::Precharge);
     contactors_state.add_state(State::Close);
-    contactors_state.add_state(State::Fault);
+    #if PRUEBAS_HVSCU
+    contactors_state.add_state(State::Fault_Holding);
+    #endif
 
     //     TRANSITIONS
     contactors_state.add_transition(State::Open, State::Charging, [&]() {
@@ -110,7 +112,7 @@ Contactors::Contactors(Pin &ess_discharge_pin, Pin &discharge_pin,
             timeout_expired = false;
         },
         State::Close);
-    
+    #if PRUEBAS_HVSCU
     contactors_state.add_enter_action(
         [&]() {
             close_charged_circuit();
@@ -118,8 +120,8 @@ Contactors::Contactors(Pin &ess_discharge_pin, Pin &discharge_pin,
             charge_request_received = false;
             close_request_received = false;
         },
-        State::Fault);
-
+        State::Fault_Holding);
+    #endif
     //     CYCLIC ACTIONS
     contactors_state.add_low_precision_cyclic_action(
         [&]() { timeout_expired = true; }, std::chrono::milliseconds(5000),
@@ -202,8 +204,8 @@ void Contactors::close() {
     close_request_received = true;
 }
 
-void Contactors::fault() {
-    contactors_state.force_change_state(State::Fault);
+void Contactors::open() {
+    contactors_state.force_change_state(State::Open);
 }
 
 void Contactors::hold_charge() {
@@ -215,7 +217,9 @@ void Contactors::hold_charge() {
 // Having the open transition behind a boolean flag could lead to catastrophic
 // logic errors, where the  board cannot open the contactors in case of an
 // emergency
-void Contactors::open() { contactors_state.force_change_state(State::Open); }
+#if PRUEBAS_HVSCU
+void Contactors::Fault_holding() { contactors_state.force_change_state(State::Fault_Holding); }
+#endif
 
 const StateMachine::state_id &Contactors::get_state() const {
     return contactors_state.current_state;

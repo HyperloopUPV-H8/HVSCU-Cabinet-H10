@@ -10,6 +10,7 @@
 #include "HVSCU/Sensors/BusVoltage.hpp"
 #include "HVSCU/Sensors/CurrentSense.hpp"
 #include "HVSCU/Sensors/IMD.hpp"
+#include "HVSCU/Config.hpp"
 #include "ST-LIB.hpp"
 
 namespace HVSCU {

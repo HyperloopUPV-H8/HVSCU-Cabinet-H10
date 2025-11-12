@@ -213,7 +213,11 @@ void Board::populate_state_machine() {
 
     general_state_machine.add_enter_action(
         [this]() {
-            contactors.fault();
+            #if PRUEBAS_HVSCU
+            contactors.Fault_holding();
+            #else
+            contactors.open();
+            #endif
             sdc.disable_sdc();
             leds.signal_fault();
         },

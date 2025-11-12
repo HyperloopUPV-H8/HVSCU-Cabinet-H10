@@ -1,5 +1,6 @@
 #pragma once
 
+#include "HVSCU/Config.hpp"
 #include "ST-LIB.hpp"
 
 namespace HVSCU::Actuators {
@@ -12,7 +13,9 @@ class Contactors {
         Charged = 2,
         Precharge = 3,
         Close = 4,
-        Fault = 5,
+        #if PRUEBAS_HVSCU
+        Fault_Holding = 5,
+        #endif
     };
 
    private:
@@ -77,7 +80,9 @@ class Contactors {
     void close();
 
     void open();
-    void fault();
+    #if PRUEBAS_HVSCU
+    void Fault_holding();
+    #endif
     void hold_charge();
 
     const StateMachine::state_id &get_state() const;

@@ -1,0 +1,1 @@
+#define PRUEBAS_HVSCU 1
