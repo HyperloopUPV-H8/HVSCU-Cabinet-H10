@@ -18,7 +18,7 @@ Board::Board()
       sdc(Pinout::imd_bypass_pin, Pinout::sdc_control_pin,
           Pinout::sdc_good_pin),
       can(),
-      stlib("00:80:e1:00:02:16",
+      stlib("00:80:e1:00:02:55",
             HVSCU::Communication::Ethernet::local_ip.string_address,
             "255.255.0.0", "192.168.2.1"),
       ethernet(
@@ -39,7 +39,7 @@ Board::Board()
 
     populate_state_machine();
     leds.signal_connecting();
-    initialize_protections();
+    // initialize_protections();
 
     can.start();
 
@@ -223,23 +223,22 @@ void Board::populate_state_machine() {
         },
         States::FAULT);
 
-    general_state_machine.add_enter_action([this]() {}, States::FAULT);
 }
 
 void Board::initialize_protections() {
-    add_protection(&imd_fault, Boundary<bool, EQUALS>(true));
-    add_protection(&can.module_can.keepalive_expired,
-                   Boundary<bool, EQUALS>(true));
-    add_protection(sdc.get_sdc_state_bool(), Boundary<bool, EQUALS>(false));
+    // add_protection(&imd_fault, Boundary<bool, EQUALS>(true));
+    // add_protection(&can.module_can.keepalive_expired,
+    //                Boundary<bool, EQUALS>(true));
+    // add_protection(sdc.get_sdc_state_bool(), Boundary<bool, EQUALS>(false));
 
-    add_protection(current_sense.get_value_pointer(),
-                   Boundary<float, OUT_OF_RANGE>(-10.0f, 70.0f, -20.0, 100.0f));
+    // add_protection(current_sense.get_value_pointer(),
+    //                Boundary<float, OUT_OF_RANGE>(-10.0f, 70.0f, -20.0, 100.0f));
 
-    add_protection(supercaps_voltage.get_voltage_pointer(),
-                   Boundary<float, ABOVE>(400.0f, 446.4f));
+    // add_protection(supercaps_voltage.get_voltage_pointer(),
+    //                Boundary<float, ABOVE>(400.0f, 446.4f));
 
-    add_protection(&can.module_can.system.total_voltage_volts,
-                   Boundary<float, ABOVE>(400.0f, 446.4f));
+    // add_protection(&can.module_can.system.total_voltage_volts,
+    //                Boundary<float, ABOVE>(400.0f, 446.4f));
 }
 
 };  // namespace HVSCU

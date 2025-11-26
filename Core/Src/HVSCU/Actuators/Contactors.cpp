@@ -70,9 +70,6 @@ Contactors::Contactors(Pin &ess_discharge_pin, Pin &discharge_pin,
     contactors_state.add_transition(State::Precharge, State::Charged,
                                     [&]() { return hold_request_received; });
 
-    contactors_state.add_transition(State::Precharge, State::Close, [&]() {
-        return bus_voltage >= ess_voltage - SAFE_VOLTAGE_DIFF;
-    });
 
     contactors_state.add_transition(State::Close, State::Charged,
                                     [&]() { return hold_request_received; });
@@ -112,6 +109,7 @@ Contactors::Contactors(Pin &ess_discharge_pin, Pin &discharge_pin,
             timeout_expired = false;
         },
         State::Close);
+        
     #if PRUEBAS_HVSCU
     contactors_state.add_enter_action(
         [&]() {
@@ -172,6 +170,13 @@ void Contactors::close_charged_circuit() {
 void Contactors::close_precharge_circuit() {
     ess_discharge.open();
     discharge.open();
+    
+    Time::set_timeout(100, [](){Contactors::flag_polla = true;});
+
+    while(flag_polla != true){
+        __NOP();
+    }
+    flag_polla = false;
 
     ess_charge.open();
     low_side.close();
@@ -182,6 +187,13 @@ void Contactors::close_precharge_circuit() {
 void Contactors::close_high_voltage_circuit() {
     ess_discharge.open();
     discharge.open();
+
+    Time::set_timeout(100, [](){Contactors::flag_polla = true;});
+
+    while(flag_polla != true){
+        __NOP();
+    }
+    flag_polla = false;
 
     ess_charge.open();
     low_side.close();

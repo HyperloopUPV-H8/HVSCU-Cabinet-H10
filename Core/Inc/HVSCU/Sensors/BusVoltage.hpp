@@ -5,8 +5,8 @@
 namespace HVSCU::Sensors {
 
 class BusVoltage {
-    constexpr static float slope{124.299f};
-    constexpr static float offset{-5.40906f};
+    constexpr static float slope{121.93889617919922f};
+    constexpr static float offset{-8.31775951385498f};
 
     LinearSensor<float> voltage_sensor;
 
