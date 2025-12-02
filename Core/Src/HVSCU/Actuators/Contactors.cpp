@@ -121,6 +121,8 @@ Contactors::Contactors(Pin &ess_discharge_pin, Pin &discharge_pin,
         State::Fault_Holding);
     #endif
     //     CYCLIC ACTIONS
+
+    //TIMEOUT PRECHARGE:
     contactors_state.add_low_precision_cyclic_action(
         [&]() { timeout_expired = true; }, std::chrono::milliseconds(5000),
         State::Precharge);
@@ -171,12 +173,12 @@ void Contactors::close_precharge_circuit() {
     ess_discharge.open();
     discharge.open();
     
-    Time::set_timeout(100, [](){Contactors::flag_polla = true;});
+    // Time::set_timeout(100, [](){Contactors::flag_polla = true;});
 
-    while(flag_polla != true){
-        __NOP();
-    }
-    flag_polla = false;
+    // while(flag_polla != true){
+    //     __NOP();
+    // }
+    // flag_polla = false;
 
     ess_charge.open();
     low_side.close();
@@ -188,12 +190,12 @@ void Contactors::close_high_voltage_circuit() {
     ess_discharge.open();
     discharge.open();
 
-    Time::set_timeout(100, [](){Contactors::flag_polla = true;});
+    // Time::set_timeout(100, [](){Contactors::flag_polla = true;});
 
-    while(flag_polla != true){
-        __NOP();
-    }
-    flag_polla = false;
+    // while(flag_polla != true){
+    //     __NOP();
+    // }
+    // flag_polla = false;
 
     ess_charge.open();
     low_side.close();
