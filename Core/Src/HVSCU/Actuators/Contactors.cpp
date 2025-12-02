@@ -60,11 +60,11 @@ Contactors::Contactors(Pin &ess_discharge_pin, Pin &discharge_pin,
     });
 
     contactors_state.add_transition(State::Charged, State::Precharge, [&]() {
-        return close_request_received && (bus_voltage < ess_voltage - SAFE_VOLTAGE_DIFF);
+        return (close_request_received && ((bus_voltage) < (ess_voltage*0.95f)));
     });
 
     contactors_state.add_transition(State::Precharge, State::Close, [&]() {
-        return (bus_voltage >= ess_voltage - SAFE_VOLTAGE_DIFF);
+        return ((bus_voltage) >= (ess_voltage*0.95f));
     });
 
     contactors_state.add_transition(State::Precharge, State::Charged,

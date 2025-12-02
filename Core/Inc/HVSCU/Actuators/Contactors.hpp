@@ -75,7 +75,7 @@ class Contactors {
    public:
     Contactors(Pin &ess_discharge_pin, Pin &discharge_pin, Pin &ess_charge_pin,
                Pin &low_side_pin, Pin &high_side_pin, Pin &precharge_pin,
-               const float &bus_voltage, const float &ess_voltage);
+            const float &bus_voltage, const float &ess_voltage);
 
     void charge(float target_voltage);
     void close();

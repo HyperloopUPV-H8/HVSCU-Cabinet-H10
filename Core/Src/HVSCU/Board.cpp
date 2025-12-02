@@ -83,6 +83,7 @@ void Board::update() {
 
         send_ethernet_10hz = false;
     }
+    bus_voltage_value = supercaps_voltage.get_voltage();
 
     if (read_sensors_10hz) {
         sdc.read_state();
