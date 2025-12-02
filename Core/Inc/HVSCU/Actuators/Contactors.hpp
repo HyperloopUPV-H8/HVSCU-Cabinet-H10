@@ -19,7 +19,7 @@ class Contactors {
     };
 
    private:
-    constexpr static float SAFE_VOLTAGE_DIFF{20.0f};
+    constexpr static float SAFE_VOLTAGE_DIFF{0.95f};
     constexpr static uint32_t CHECK_PERIOD_MS{100};
     inline static volatile bool flag_polla {false};
 
